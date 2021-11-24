@@ -82,25 +82,29 @@ stargazer(
 
 c. Using diagnostic plots, background knowledge, and statistical tests, assess all five assumptions of the CLM. When an assumption is violated, state what response you will take.  As part of this process, you should decide what transformation (if any) to apply to each variable. Iterate against your model until your satisfied that at least four of the five assumption have been reasonably addressed. 
 
-> 1. **IID Data:** 'Replace this quote with your assessment of the IID assumption.'
-> 2. **No Perfect Colinearity:** 'Replace this quote with your assessment of the no-perfect colinearity assumption.' 
-> 3. **Linear Conditional Expectation:** 'Replace this quote with what you are looking for when you are assessing linear conditional expectation. Also include what you observe in your plot. In the model that you have chosen to report, do you satisfy the assumption of a linear conditional expectation? 
+> 1. **IID Data:** We have a dataset that includes observations of about 9618 videos shared on YouTube. While we expect each sample's distribution to be identical we may not claim clean independence. Number of views on a video in a specific genre or interest area can influence views on other videos since they may get recommended more frequently.
+
+> 2. **No Perfect Colinearity:** Our model ran without dropping variables which indicates that there are no variables that are perfectly colinear.
+
+> 3. **Linear Conditional Expectation:** When we're looking to asses linear conditional expectation we want to look at the range of predicted values and errors or residuals. The model we chose does satisfy this assumption because we see a linear relationship in the plot. There is a fairly straight line near zero. But this same plot gives us some info about the next assumption on Homoskedastic Errors.
+
 
 ```{r code and plots assessing linear conditional expectation}
-## remove this commented block and write code that can help you assess whether
-## your model satisfied the requirement of a linear conditional expectation. 
+modf <- fortify(model)
+ggplot(modf, aes(x = .fitted, y = .resid)) + geom_point() + geom_smooth()
 ```
 
-> 4. **Homoskedastic Errors:** 'Replace this quote with what you are looking for when you are assessing homoskedastic errors. Also include what you observe in your plot. In the model that you have chosen to report, do you satisfy the assumption of homoskedastic errors?'
+> 4. **Homoskedastic Errors:** We're using the same fitted vs. residual values plot which shows that errors are not evenly distrbuted from left to right and there is an increase in variation of error terms as we move right on the x-axis. This means there is presennce of homoscedasticity. Since we do have a large sample of well above 100 we are not as concerned with this issue since we'll be using ropbust standard errors that will produce correct or nominal standard errors in p-values. This may have to do with skewness that we saw in the data earlier when fitting the model.
 
-```{r code and plots assessing error variance}
-## remove this commented block and write code that can help you assess whether 
-## your model satisfied the requirement of homoskedastic errors
+```{r code and plots assessing homoskedastic errors}
+modf <- fortify(model)
+ggplot(modf, aes(x = .fitted, y = .resid)) + geom_point() + geom_smooth()
+
+#should we do a Breuch Pegan test?
 ```
 
-> 5. **Normally Distributed Errors:** 'Replace this quote with what you are looking for when you are assessing the normality of your error distribution. Also include what you observe in your plot. In the model that you have chosen to report, do you satisfy the assumption of normally distributed errors?'
+> 5. **Normally Distributed Errors:** To check for normal distribution in errors we look at the Normal Q-Q plot. When errors are normally distrbuted we'll see a straight line, which we do see in the plot below. There is small deviation in the tails but overall we don't see serious deviations from normality. This assumption is satisfied.
 
-```{r code and plots assessing normally distributed errors}
-## remove this commented block and write code that can help you assess whether 
-## your model satisfied the requirement of normally distributed errors
+```{r}
+plot(model, which=2)
 ```
