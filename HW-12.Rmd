@@ -51,6 +51,11 @@ ggplot(d, aes(x=average_rating)) + geom_histogram(bins = 100) + labs(
 yt_df<-d[!(d$average_rating==0),]
 yt_df<-yt_df[!(is.na(yt_df$length)),]
 
+ggplot(yt_df, aes(x=average_rating)) + geom_histogram(bins = 100) + labs(
+  title = "Average Rating Distribution",
+  x = "Average Rating",
+  y = "Count")
+
 ggplot(yt_df, aes(x=views)) + geom_histogram(bins = 100) + labs(
   title = "Views Distribution",
   x = "Num of Views",
@@ -143,7 +148,9 @@ plot_model_length <- yt_df %>%
   x = "Log of Video Length",
   y = "Residuals")
 
-plot_model_fitted | plot_model_rating | plot_model_length
+plot_model_fitted
+plot_model_rating
+plot_model_length
 ```
 
 > 4. **Homoskedastic Errors:** We’re using the same fitted vs. residual values plot which shows that errors are not evenly distrbuted from left to right and there is an increase in variation of error terms as we move right on the x-axis. This means there is presence of heteroskedasticity. As for the Breusch-Pagan test, since the p-value is less than 0.05, we can reject the null hypothesis. This evidence suggests that heteroscedasticity is present in the regression model.
@@ -184,3 +191,6 @@ bptest(model_two)
 ```{r}
 plot(model, which=2)
 ```
+
+We've gone over all 5 assumptions. The only one that could pose a problem is the lack of IID data, as explained above. We also do see that there is evidence of heteroskedasticity, but as mentioned above we do have a large sample of well above 100 so we are not as concerned with this issue since we’ll be using robust standard errors that will produce correct or nominal standard errors in p-values.
+Having said that, I do think we should add the log(count_of_ratings) as a variable in our model, even if it doesn't fix the heteroskedasticity as it does significantly increase the adjusted R2, and is found to be a significant coefficient.
