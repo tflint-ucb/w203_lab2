@@ -49,6 +49,7 @@ ggplot(d, aes(x=average_rating)) + geom_histogram(bins = 100) + labs(
   x = "Average Rating",
   y = "Count")
 yt_df<-d[!(d$average_rating==0),]
+yt_df<-yt_df[!(is.na(yt_df$length)),]
 
 ggplot(yt_df, aes(x=views)) + geom_histogram(bins = 100) + labs(
   title = "Views Distribution",
@@ -99,25 +100,54 @@ stargazer(
 c. Using diagnostic plots, background knowledge, and statistical tests, assess all five assumptions of the CLM. When an assumption is violated, state what response you will take.  As part of this process, you should decide what transformation (if any) to apply to each variable. Iterate against your model until your satisfied that at least four of the five assumption have been reasonably addressed. 
 
 > 1. **IID Data:** “IID assumes that the data was gathered in a truly random sampling method, with chosen videos in the sample being truly independent of one another, and an even distribution of the videos across all of the population, Youtube. However, in the publication notes that describe how the dataset was gathered, the researchers describe that the data was initiated from these curated lists on Youtube: “Recently Featured”, “Most Viewed”, “Top Rated” and “Most Discussed”, for “Today”, “This Week”, “This Month” and “All Time”. This in itself means that videos that are more popular are often used as the “seeds” in the crawler algorithm. On top of this, the crawler uses the “related videos” of the starting set to determine where to branch out to, and compounds on this process 3-5 times to gather the entire dataset. Moreover, number of views on a video in a specific genre or interest area can influence views on other videos since they may get recommended more frequently.
-This whole process is conducted in multiple drawings from Feb 2007 to Sep 2008. Given that the videos are “related” in content, that directly means they are not independent from one another. Moreover, the starting point being the curated lists means that they may not be an accurately dispersed representation of all the videos on youtube. Our personal assessment of the data is thus is that it is not truly IID, however given the large sample size of the data, and the incorporation of multiple dates of data pulls, the net effect of this may not be consequential. Aside from re-designing a separate web crawler and re-running the program, it may not
+This whole process is conducted in multiple drawings from Feb 2007 to Sep 2008. Given that the videos are “related” in content, that directly means they are not independent from one another. Moreover, the starting point being the curated lists means that they may not be an accurately dispersed representation of all the videos on youtube. Our personal assessment of the data is thus is that it is not truly IID, however given the large sample size of the data, and the incorporation of multiple dates of data pulls, the net effect of this may not be consequential. Our ideal response would be to re-design a separate web crawler and re-run the program, but it may not
 be possible to effectively guarantee IID of the dataset through another pull.”
 
-> 2. **No Perfect Colinearity:** 
+> 2. **No Perfect Colinearity:** “The No Perfect Colinearity assumption states that no set of independent variables used for the model can be directly “explained” by each other, with a pure/exact linear relationship between them. Of the variables used in the model, rate and length of video, neither of these are colinear. One way to know if this were not the case is that R would discard one of the variables in the regression performed above, because it won’t be possible to invert the matrix of regressors.
+We also don't see any indicators of Near Perfect Colinearity. If we get the correlation for average_rating with both length and log of length, we see that they have some correlation but nowhere near enough to indicate there is some near perfect colinearity.
+”
 
-The No Perfect Colinearity assumption states that no set of independent variables used for the model can be directly “explained” by each other, with a pure/exact linear relationship between them. Of the variables used in the model, rate and length of video, neither of these are colinear. One way to know if this were not the case is that R would discard one of the variables in the regression performed above, because it won’t be possible to invert the matrix of regressors.”
+```{r get the correlation between average_rating and length}
+cor(yt_df$average_rating, yt_df$length)
+cor(yt_df$average_rating, log(yt_df$length))
+```
 
-> 3. **Linear Conditional Expectation:** When we’re looking to assess linear conditional expetation we want to look at the range of predicted values and errors or residuals. The model we chose does satisfy this assumption because we see a linear relationship in the plot. There is a fairly straight line near zero. But this same plot gives us some info about the next assumption on Homoskedastic Errors.
+> 3. **Linear Conditional Expectation:** When we’re looking to assess linear conditional expetation we want to look at the range of predicted values and errors or residuals. The model we chose does satisfy this assumption because we see a linear relationship in the plot. There is a fairly straight line near zero. But this same plot gives us some info about the next assumption on Homoskedastic Errors. If we look each of the variables against the residuals, we still see them as mmostly straight lines near zero, with averge rating being slightly less straight, but still surrounding zero. It does not seem necessary to do any transformations. 
 
 
 ```{r code and plots assessing linear conditional expectation}
-modf <- fortify(model)
-ggplot(modf, aes(x = .fitted, y = .resid)) + geom_point() + geom_smooth() + labs(
+yt_df <- yt_df %>% 
+  mutate(    
+    model_predictions = predict(model), 
+    model_residuals   = resid(model)
+    )
+
+plot_model_fitted <- yt_df %>%  
+  ggplot(aes(x = model_predictions, y = model_residuals)) + 
+  geom_point() + stat_smooth() + labs(
   title = "Residuals over Fitted",
   x = "Fitted",
   y = "Residuals")
+
+plot_model_rating <- yt_df %>%  
+  ggplot(aes(x = average_rating, y = model_residuals)) + 
+  geom_point() + stat_smooth() + labs(
+  title = "Residuals over Rating",
+  x = "Average Rating",
+  y = "Residuals")
+
+plot_model_length <- yt_df %>%  
+  ggplot(aes(x = log(length), y = model_residuals)) + 
+  geom_point() + stat_smooth() + labs(
+  title = "Residuals over Log of Length",
+  x = "Log of Video Length",
+  y = "Residuals")
+
+plot_model_fitted | plot_model_rating | plot_model_length
 ```
 
-> 4. **Homoskedastic Errors:** We’re using the same fitted vs. residual values plot which shows that errors are not evenly distrbuted from left to right and there is an increase in variation of error terms as we move right on the x-axis. This means there is presence of heteroskedasticity. Since we do have a large sample of well above 100 we are not as concerned with this issue since we’ll be using robust standard errors that will produce correct or nominal standard errors in p-values. This may have to do with skewness that we saw in the data earlier when fitting the model. As for the Breusch-Pagan test, since the p-value is less than 0.05, we can reject the null hypothesis. This evidence suggests that heteroscedasticity is present in the regression model.
+> 4. **Homoskedastic Errors:** We’re using the same fitted vs. residual values plot which shows that errors are not evenly distrbuted from left to right and there is an increase in variation of error terms as we move right on the x-axis. This means there is presence of heteroskedasticity. As for the Breusch-Pagan test, since the p-value is less than 0.05, we can reject the null hypothesis. This evidence suggests that heteroscedasticity is present in the regression model.
+Since we do have a large sample of well above 100 we are not as concerned with this issue since we’ll be using robust standard errors that will produce correct or nominal standard errors in p-values. This may have to do with skewness that we saw in the data earlier when fitting the model. 
 
 ```{r code and plots assessing homoskedastic errors}
 modf <- fortify(model)
@@ -128,6 +158,27 @@ ggplot(modf, aes(x = .fitted, y = .resid)) + geom_point() + geom_smooth() + labs
 
 bptest(model)
 ```
+
+We could also consider omitted variables as the reason for the heteroskedasticity. Adding the log of count of ratings significantly increases the R2 (and Adjusted R2). However it does not seem help with the heteroskedasticity. It seems to be shifting it to the low values. One could interpret this as count_of_ratings being a better predictor for videos with high views, while videos with low views have more variance. Breusch-Pagan test also rejects the null hypothesis, which reinforces that we still seem to have a heteroskedasticity. problem.
+
+
+```{r code for new model}
+model_two <- lm(log(views) ~ average_rating + log(length) + log(count_of_ratings), data=yt_df)
+
+stargazer(
+  model_two, 
+  type = 'text', 
+  se = list(get_robust_se(model_two))
+)
+modf_2 <- fortify(model_two)
+ggplot(modf_2, aes(x = .fitted, y = .resid)) + geom_point() + geom_smooth() + labs(
+  title = "Residuals over Fitted with Count of Ratings",
+  x = "Fitted",
+  y = "Residuals")
+
+bptest(model_two)
+```
+
 > 5. **Normally Distributed Errors:** To check for normal distribution in errors we look at the Normal Q-Q plot, which compares the quantiles of our results against each other, in order to see if the distributions are similar. When errors are normally distrbuted we’ll see a straight line, which we do see in the plot below. There is small deviation in the tails but overall we don’t see serious deviations from normality. This assumption is satisfied.
 
 ```{r}
