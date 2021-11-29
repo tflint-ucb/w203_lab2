@@ -1,0 +1,51 @@
+Rank,Score,Name,M or F,Count
+1,5,Alfred Hitchcock,M,2
+2,5,Stanley Kubrick,M,2
+3,5,Billy Wilder,M,1
+4,5,David Lean,M,1
+5,5,Woody Allen,M,2
+6,5,William Wyler,M,1
+7,5,Orson Welles,M,2
+8,5,Martin Scorsese,M,2
+9,5,Charlie Chaplin,M,2
+10,5,Roman Polanski,M,2
+11,4,Preston Sturges,M,1
+12,4,Ernst Lubitsch,M,1
+13,4,Michael Powell,M,1
+14,4,Quentin Tarantino,M,2
+15,4,Francis Ford Coppola,M,2
+16,4,David Lynch,M,1
+17,4,Frank Capra,M,2
+18,4,John Huston,M,1
+19,4,Fritz Lang,M,1
+20,4,Elia Kazan,M,2
+21,3,Robert Altman,M,1
+22,3,Mike Nichols,M,1
+23,3,Terrence Malick,M,1
+24,3,Cecil B. DeMille,M,1
+25,3,Steven Spielberg,M,2
+26,3,George Cukor,M,1
+27,3,Michael Curtiz,M,1
+28,3,Joseph L. Mankiewicz,M,1
+29,3,John Cassavetes,M,1
+30,3,D.W. Griffith,M,1
+31,2,Vincente Minnelli,M,2
+32,2,Douglas Sirk,M,1
+33,2,Arthur Penn,M,1
+34,2,John Ford,M,1
+35,2,Joel Coen,M,1
+36,2,Ridley Scott,M,2
+37,2,Tim Burton,M,2
+38,2,Otto Preminger,M,1
+39,2,Peter Jackson,M,2
+40,2,Oliver Stone,M,2
+41,1,Mel Brooks,M,2
+42,1,Spike Lee,M,2
+43,1,Howard Hawks,M,1
+44,1,James Cameron,M,2
+45,1,Clint Eastwood,M,2
+46,1,George Lucas,M,2
+47,1,Robert Zemeckis,M,1
+48,1,Brian De Palma,M,2
+49,1,Sam Peckinpah,M,2
+50,1,Sam Raimi,M,1
