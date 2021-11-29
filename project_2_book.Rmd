@@ -21,5 +21,21 @@ directors <- read.csv('./src/data/Greatest Directors List.csv')
 
 
 ```{r setup, include=FALSE}
-d
+summary(d)
+
+short_data <- drop(d$dvd_release)
+
+
+# exclude variables "production", "dvd_release", "imdbid", poster, keywords
+myvars <- names(d) %in% c("production", "dvd_release", "imdbid", "poster", "keywords")
+short_data <- d[!myvars]
+
 ```
+
+
+```{r}
+short_data
+```
+
+
+
