@@ -11,6 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Introduction 
 
+
+
 Imagine that you are part of a team of product data scientists at Acme, Inc. Your manager, Mx. Coy Ote, has given you the freedom to choose your own product to investigate, and evaluate a way to make it more successful.
 
 **Your task is to select and develop a research question, find appropriate data, then conduct a regression study.** 

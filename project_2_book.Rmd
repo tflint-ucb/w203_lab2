@@ -1,0 +1,25 @@
+---
+title: "Lab 2: What Makes a Movie Successful? Fall 2021"
+author: 'w203: Statistics for Data Science'
+date: "November 1, 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r setup, include=FALSE}
+d <- read.csv('./src/data/Raw Movie Data.csv')
+
+actors <- read.csv('./src/data/Greatest Actors List.csv')
+
+directors <- read.csv('./src/data/Greatest Directors List.csv')
+```
+
+
+```{r setup, include=FALSE}
+d
+```
