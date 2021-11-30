@@ -34,7 +34,19 @@ short_data <- d[!myvars]
 
 
 ```{r}
-short_data
+# Transform budget and box office columns to numeric
+numeric_data <- transform(short_data, Box.Office.Gross = as.numeric(Box.Office.Gross))
+numeric_data <- transform(numeric_data, Budget = as.numeric(Budget))
+
+# Remove entries without box office gross
+clean_data<-numeric_data[!(is.na(numeric_data$Box.Office.Gross)),]
+# Remove entries without budget
+clean_data<-clean_data[!(is.na(clean_data$Budget)),]
+
+# Add the profitability column
+
+clean_data$Profitability.Ratio <- clean_data$Box.Office.Gross / clean_data$Budget
+
 ```
 
 
