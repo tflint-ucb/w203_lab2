@@ -9,6 +9,9 @@ output:
 
 ```{r knit options, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+install.packages('pkgName')
+sink('out.log')
+library(jsonlite)
 ```
 
 ## Introduction
@@ -35,7 +38,7 @@ The products of this analysis will include the code and final datasets, as well 
 <!-- Add more about our data and source --> 
 
 ```{r setup, include=FALSE}
-d <- read.csv('./src/data/Raw Movie Data.csv')
+d <- read.csv('./src/data/TMDB Data Set.csv')
 
 actors <- read.csv('./src/data/Greatest Actors List.csv')
 
@@ -43,6 +46,7 @@ directors <- read.csv('./src/data/Greatest Directors List.csv')
 ```
 
 
+<<<<<<< HEAD
 ```{r exclude variables, include=FALSE}
 summary(d)
 
@@ -52,10 +56,17 @@ short_data <- drop(d$dvd_release)
 # exclude variables "production", "dvd_release", "imdbid", poster, keywords
 myvars <- names(d) %in% c("production", "dvd_release", "imdbid", "poster", "keywords")
 short_data <- d[!myvars]
+=======
+```{r setup, include=FALSE}
+# exclude unnecessary variables
+excluded_variables <- names(d) %in% c("homepage", "overview", "imdb_id", "popularity", "poster_path", "status", "tagline", "title", "Keywords")
+short_data <- d[!excluded_variables]
+>>>>>>> Clean data
 
 ```
 
 
+<<<<<<< HEAD
 ```{r clean data, include=FALSE}
 # Transform budget and box office columns to numeric
 numeric_data <- transform(short_data, Box.Office.Gross = as.numeric(Box.Office.Gross))
@@ -63,13 +74,22 @@ numeric_data <- transform(numeric_data, Budget = as.numeric(Budget))
 
 # Remove entries without box office gross
 clean_data<-numeric_data[!(is.na(numeric_data$Box.Office.Gross)),]
+=======
+```{r}
+>>>>>>> Clean data
 # Remove entries without budget
-clean_data<-clean_data[!(is.na(clean_data$Budget)),]
+clean_data<-short_data[(short_data$budget > 0),]
 
-# Add the profitability column
+# Convert belongs_to_collection to a True or False variable
+clean_data$belongs_to_collection[clean_data$belongs_to_collection != ""] <- TRUE
+clean_data$belongs_to_collection[clean_data$belongs_to_collection == ""] <- FALSE
 
-clean_data$Profitability.Ratio <- clean_data$Box.Office.Gross / clean_data$Budget
 
+# Convert belongs_to_collection to a True or False variable
+by(clean_data, seq_len(nrow(clean_data)), function(row) {
+  genres <- fromJSON(row$genres)
+  sink(genres)
+})
 ```
 
 ### Research design
