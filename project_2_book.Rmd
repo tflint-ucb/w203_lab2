@@ -52,12 +52,22 @@ short_data <- d[!excluded_variables]
 
 
 ```{r clean data, include=FALSE}
-# Remove entries without budget
+# Remove entries without budget or genre or cast
 clean_data<-short_data[(short_data$budget > 0),]
-
+clean_data<-clean_data[(clean_data$genres != ""),]
+clean_data<-clean_data[(clean_data$cast != "[]"),]
 # Convert belongs_to_collection to a True or False variable
 clean_data$belongs_to_collection[clean_data$belongs_to_collection != ""] <- TRUE
 clean_data$belongs_to_collection[clean_data$belongs_to_collection == ""] <- FALSE
+# Convert belongs_to_collection to a True or False variable
+clean_data <- clean_data %>%
+ mutate(
+   genres = map(genres, function(coded) {
+      parsed <- fromJSON(gsub("QUUX", "'", gsub("'", '"', gsub('"', "QUUX", coded))))
+      
+      return(parsed$name)
+    }),
+  )
 ```
 
 ### Research design
