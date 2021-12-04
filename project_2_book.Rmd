@@ -60,14 +60,27 @@ clean_data<-clean_data[(clean_data$cast != "[]"),]
 clean_data$belongs_to_collection[clean_data$belongs_to_collection != ""] <- TRUE
 clean_data$belongs_to_collection[clean_data$belongs_to_collection == ""] <- FALSE
 # Convert belongs_to_collection to a True or False variable
+
 clean_data <- clean_data %>%
  mutate(
-   genres = map(genres, function(coded) {
-      parsed <- fromJSON(gsub("QUUX", "'", gsub("'", '"', gsub('"', "QUUX", coded))))
-      
+   genres = map(genres, function(genre) {
+      genre <- gsub("'(?![a-z])|(?<=\\{|\\s)'", '"', genre, perl = TRUE)
+      cat(genre, '\n')
+      parsed <- fromJSON(genre)
       return(parsed$name)
     }),
+    cast = map(cast, function(full_cast) {
+      coded <- gsub('None', 0, full_cast)
+      parsed <- gsub("'(?![a-z])|(?<=\\{|\\s)'", '"', coded, perl = TRUE)
+      cat(genre, '\n')
+      parsed <- fromJSON(parsed)
+      
+      return(parsed)
+    }),
+    
   )
+
+rlang::last_error()
 ```
 
 ### Research design
