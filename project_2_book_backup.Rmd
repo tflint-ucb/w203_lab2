@@ -27,14 +27,6 @@ The datasets we’ll use for this analysis come from NBCUniversal directly, as w
 We’re planning on using profitability as the response variable for analysis in this study - using R to clean the empty and irrelevant cells, a “profitability ratio” can be determined for each movie based on its box office sales divided by budget (and controlling for foreign films and currencies). In assessing the value of name-brand recognition in Hollywood, we’ll use R and its extensions to cross-check the presence of the “greatest” actors and actresses of all time, assigning a count to each movie to later plot against profitability. We’ll be using an Ordinary Least Squares regression model to predict movie success as a factor of famous actor/director presence, online ratings, and other variables that we find significant.
 
 Once we obtain an accurate model, we can obtain numbers such as the monetary value of a single point increase in rating, to explain the trends and interpret results. We can consider several situations accounting for premiere dates, return on investment (ROI), runtime along variables mentioned earlier. While there are certain limitations to this data set and analysis e.g. limited number of data points, some data entry errors,  inaccurate labeling and biased focus on foreign films, and subjective descriptions of the movies, this should serve as a tool and starting point for aspiring and current filmmakers.
-<<<<<<< Updated upstream
-
-The products of this analysis will include the code and final datasets, as well as a written summary of the significant results. 
-
-
-## Data and Research Design
-
-=======
 
 The products of this analysis will include the code and final datasets, as well as a written summary of the significant results. 
 
@@ -280,23 +272,29 @@ We are running two models, one with the log of gross revenue as the dependent va
 
 ```{r}
 
-ggplot(final_table, aes(x=budget)) + geom_histogram(bins = 100) + ggtitle("Distribution of Film Budgets") + xlab("Budget (USD)") + ylab("Count")
+ggplot(final_table, aes(x=budget)) + geom_histogram(bins = 100)
+title(main = 'Distribution of Lilm Budgets', xlab = 'Budget (USD)', ylab = 'Count')
 
-ggplot(final_table, aes(x=revenue)) + geom_histogram(bins = 100)  + ggtitle("Distribution of Film Revenues") + xlab("Revenue (USD)") + ylab("Count")
+
+ggplot(final_table, aes(x=revenue)) + geom_histogram(bins = 100)
 
 
 # The logarithm of both budget and revenue appear more homogenously distributed
-ggplot(final_table, aes(x=log(budget))) + geom_histogram(bins = 100) + ggtitle("Distribution of Log of Film Budgets") + xlab("Log of Budget (USD)") + ylab("Count")
+ggplot(final_table, aes(x=log(budget))) + geom_histogram(bins = 100)
 
-ggplot(final_table, aes(x=log(revenue))) + geom_histogram(bins = 100) + ggtitle("Distribution of Log of Film Revenues") + xlab("Log of Revenue (USD)") + ylab("Count")
+ggplot(final_table, aes(x=log(revenue))) + geom_histogram(bins = 100)
 
-ggplot(final_table, aes(x=log(profitability_ratio))) + geom_histogram(bins = 100) + ggtitle("Distribution of Log of Profitability Ratios") + xlab("Log of Ratio") + ylab("Count")
+ggplot(final_table, aes(x=log(profitability_ratio))) + geom_histogram(bins = 100)
 #Looking at the shape and distribution of profitability ratios, the log of the graph looks pretty well distributed and helps accommodate for anomalies.
 
-ggplot(final_table, aes(x=runtime)) + geom_histogram(bins = 100) + ggtitle("Distribution of Film Runtime") + xlab("Runtime (min)") + ylab("Count")
+ggplot(final_table, aes(x=runtime)) + geom_histogram(bins = 100)
 #runtime appears to be relatively normally distributed overall, except for the narrow group on the lower end of time
 
-ggplot(final_table, aes(x=substr(release_date, start = 1, stop = 2))) + geom_bar() + ggtitle("Distribution of Month of Release Date") + xlab("Month") + ylab("Count")
+
+#ggplot(final_table, aes(x=release_date)) + geom_bar()
+
+
+ggplot(final_table, aes(x=substr(release_date, start = 1, stop = 2))) + geom_bar()
 #Release date overall looks fairly well distributed over time - the number indicates month, with 1/ - 9/ representing  January to September, and 10 - 12 representing October - December
 
 
@@ -304,41 +302,15 @@ ggplot(final_table, aes(x=substr(release_date, start = 1, stop = 2))) + geom_bar
 
 ```{r}
 
-
 plot(log(final_table$budget), log(final_table$revenue))
-title(main = 'Logarithmic Movie Revenue over Budget')
+title(main = 'Logarithmic Movie Revenue over Budget', xlab = 'Log of Budget', ylab = 'Log of Revenue')
 # The shape of the relationship looks to be positively correlated, and seems to suggest that a higher budget results in a higher revenue
 
-<<<<<<< Updated upstream
 plot(final_table$runtime, log(final_table$revenue))
 title(main = 'Logarithmic Movie Revenue over Movie Runtime', xlab = 'Runtime', ylab = 'Log of Revenue')
 
 ```
 
-=======
-
-plot(final_table$runtime, log(final_table$revenue))
-title(main = 'Logarithmic Movie Revenue over Movie Runtime')
-
-
-```
-
-```{r}
-
-source('./src/get_robust_se.R')
-
-model <- lm(log(revenue) ~ log(budget) + comedy + drama + family + romance + thriller + animation + adventure + horror + music + crime + sci_fi + action + war + western + fantasy + foreign + mystery + history + documentary, data=final_table)
-
-stargazer(
-  model, 
-  type = 'text', 
-  se = list(get_robust_se(model))
-)
-```
-
-
-
->>>>>>> Stashed changes
 ### Research design
 
 <!-- Type of research design --> 
