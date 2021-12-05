@@ -1,0 +1,356 @@
+---
+title: "Lab 2: What Makes a Movie Successful? Fall 2021"
+author: 'w203: Statistics for Data Science'
+date: "November 1, 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(ggplot2) 
+library(jsonlite)
+
+library(sandwich)
+library(stargazer)
+```
+
+## Introduction
+
+<!-- Possibly add more about why the models are constructed the way they are --> 
+
+What makes a movie “one of the greats”? While that question may elude both data analysts and artists for years to come, we are looking to  find some effective indicators of box office success for films, in the hopes of maintaining a thriving movie industry for years to come. This project will focus on several commonly cited reasons for movie fiscal success and analyze how much of an impact each factor has. 
+
+The client for this analysis could be any major movie studio or its parent company, e.g. NBCUniversal or Walt Disney Studios. This is a significant issue, because box office sales decreased by 60% in 2020 during COVID-19 pandemic, leaving the movie theaters empty for months. This analysis will provide clues for what a studio can do to speed up the recovery and account for lost revenue.
+
+The main dataset we’ll use for this analysis comes from The Movie Database (TMDB - https://www.themoviedb.org/), as well as several assembled lists from online polls (e.g. “Greatest Actors/Actresses of All Time” - Ranker.com).
+
+We’re planning on using profitability as the response variable for analysis in this study - using R to clean the empty and irrelevant cells, a “profitability ratio” can be determined for each movie based on its box office sales divided by budget (and controlling for foreign films and currencies).
+
+In order to build our models, we decided to focus on some factors that are usually linked to a movie's financial success, such as budget, time of release, its cast's popularity and director's name brand recognition. We will also take into account some control variables such as runtime and genre.
+
+
+The products of this analysis will include the code and final datasets, as well as a written summary of the significant results. 
+
+
+## Data and Research Design
+
+### Data
+
+
+```{r setup, include=FALSE}
+d <- read.csv('./src/data/Clean_Data_set.csv')
+
+actors_df <- read.csv('./src/data/Greatest Actors List.csv')
+
+directors_df <- read.csv('./src/data/Greatest Directors List.csv')
+```
+
+
+```{r setup, include=FALSE}
+# exclude unnecessary variables
+excluded_variables <- names(d) %in% c("homepage", "overview", "imdb_id", "popularity", "poster_path", "status", "tagline", "title", "Keywords", "production_companies", "production_countries", "spoken_languages", "cast", "crew")
+short_data <- d[!excluded_variables]
+
+#remove empty actors entry
+actors_df<- actors_df[(actors_df$Name != ''),]
+
+#rename director columns
+names(directors_df)[names(directors_df) == 'Name'] <- 'director_name'
+names(directors_df)[names(directors_df) == 'Score'] <- 'director_score'
+names(short_data)[names(short_data) == 'director'] <- 'director_name'
+
+
+#drop unnecessary director columns
+excluded_variables <- names(directors_df) %in% c("Rank", "Count", "M.or.F")
+directors_df <- directors_df[!excluded_variables]
+```
+
+```{r clean data, include=FALSE}
+# Remove entries without budget or genre or cast
+clean_data<-short_data[(short_data$budget > 0),]
+clean_data<-clean_data[(clean_data$actors != "[]"),]
+clean_data<-clean_data[(clean_data$directors != "[]"),]
+# Convert belongs_to_collection to a True or False variable
+clean_data$belongs_to_collection[clean_data$belongs_to_collection != ""] <- TRUE
+clean_data$belongs_to_collection[clean_data$belongs_to_collection == ""] <- FALSE
+
+# Convert belongs_to_collection to a True or False variable
+clean_data$belongs_to_collection[clean_data$belongs_to_collection != ""] <- TRUE
+clean_data$belongs_to_collection[clean_data$belongs_to_collection == ""] <- FALSE
+
+```
+
+
+```{r add actor score, include=FALSE}
+top_actors <- actors_df$Name
+count_top_actors <- function(list) {
+  counter <- 0
+  for (actor in top_actors) {
+    if (regexpr(actor, list[12]) >= 0) {
+      counter <- counter + 1
+    }
+  }
+  return(counter)
+}
+
+clean_data$actor_score <- apply(clean_data, 1, FUN = count_top_actors)
+```
+
+```{r add director score, include=FALSE}
+merged_data <- merge(clean_data, directors_df, by = "director_name", all.x = TRUE)
+merged_data$director_score[is.na(merged_data$director_score)] <- 0
+```
+
+```{r}
+final_table <- merged_data %>% 
+  mutate(
+    comedy = case_when(
+      #encode comedy, and all subsequent genres as binary
+      regexpr('Comedy', genres) >= 0 ~ 1, 
+      regexpr('Comedy', genres) == -1 ~ 0),
+    
+    drama = case_when(
+      regexpr('Drama', genres) >= 0 ~ 1, 
+      regexpr('Drama', genres) == -1 ~ 0),
+
+    family = case_when(
+      regexpr('Family', genres) >= 0 ~ 1, 
+      regexpr('Family', genres) == -1 ~ 0),
+
+    romance = case_when(
+      regexpr('Romance', genres) >= 0 ~ 1, 
+      regexpr('Romance', genres) == -1 ~ 0), 
+    
+    thriller = case_when(
+      regexpr('Thriller', genres) >= 0 ~ 1, 
+      regexpr('Thriller', genres) == -1 ~ 0), 
+    
+    animation = case_when(
+      regexpr('Animation', genres) >= 0 ~ 1, 
+      regexpr('Animation', genres) == -1 ~ 0), 
+    
+    adventure = case_when(
+      regexpr('Adventure', genres) >= 0 ~ 1, 
+      regexpr('Adventure', genres) == -1 ~ 0), 
+    
+    horror = case_when(
+      regexpr('Horror', genres) >= 0 ~ 1, 
+      regexpr('Horror', genres) == -1 ~ 0), 
+    
+    music = case_when(
+      regexpr('Music', genres) >= 0 ~ 1, 
+      regexpr('Music', genres) == -1 ~ 0), 
+    
+    crime = case_when(
+      regexpr('Crime', genres) >= 0 ~ 1, 
+      regexpr('Crime', genres) == -1 ~ 0), 
+    
+    sci_fi = case_when(
+      regexpr('Science Fiction', genres) >= 0 ~ 1, 
+      regexpr('Science Fiction', genres) == -1 ~ 0), 
+    
+    action = case_when(
+      regexpr('Action', genres) >= 0 ~ 1, 
+      regexpr('Action', genres) == -1 ~ 0), 
+    
+    war = case_when(
+      regexpr('War', genres) >= 0 ~ 1, 
+      regexpr('War', genres) == -1 ~ 0), 
+    
+    western = case_when(
+      regexpr('Western', genres) >= 0 ~ 1, 
+      regexpr('Western', genres) == -1 ~ 0), 
+    
+    fantasy = case_when(
+      regexpr('Fantasy', genres) >= 0 ~ 1, 
+      regexpr('Fantasy', genres) == -1 ~ 0), 
+    
+    foreign = case_when(
+      regexpr('Foreign', genres) >= 0 ~ 1, 
+      regexpr('Foreign', genres) == -1 ~ 0), 
+        
+    mystery = case_when(
+      regexpr('Mystery', genres) >= 0 ~ 1, 
+      regexpr('Mystery', genres) == -1 ~ 0), 
+    
+    history = case_when(
+      regexpr('History', genres) >= 0 ~ 1, 
+      regexpr('History', genres) == -1 ~ 0), 
+    
+    documentary = case_when(
+      regexpr('Documentary', genres) >= 0 ~ 1, 
+      regexpr('Documentary', genres) == -1 ~ 0),
+    
+    january = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '1/' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '1/' ~ 0),
+    
+    
+     february = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '2/' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '2/' ~ 0),
+    
+    march = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '3/' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '3/' ~ 0),
+    
+    april = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '4/' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '4/' ~ 0),
+    
+    may = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '5/' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '5/' ~ 0),
+       
+     june = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '6/' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '6/' ~ 0),
+    
+    july = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '7/' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '7/' ~ 0),
+    
+    
+    august = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '8/' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '8/' ~ 0),
+    
+    september = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '9/' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '9/' ~ 0),
+    
+    october = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '10' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '10' ~ 0),
+    
+    november = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '11' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '11' ~ 0),
+    
+    december = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '12' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '12' ~ 0),
+    
+    native_english_film = case_when(
+      
+      original_language == 'en' ~ 1, 
+      original_language != 'en' ~ 0), 
+    
+    profitability_ratio = revenue / budget
+    
+    
+  )
+      
+
+  
+  
+final_table
+```
+
+
+## Statistical Model
+
+<!-- EDA  --> 
+<!-- At least three model specifications: one with key variables, two defensible models  --> 
+
+We are running two models - one with the log of gross revenue as the dependent variable, and the independent variables being the log of budget and the listed genres. The other model ______________________________________________________________________________________________________________________________________________________________________________________________________________________________________INSERT TEXT HERE________________________________________________________________________________________________________________________________________________________________________________________________
+
+<!-- What are we measuring --> 
+<!-- Covariates, problems with covariates --> 
+<!-- Transformations --> 
+
+```{r}
+
+ggplot(final_table, aes(x=budget)) + geom_histogram(bins = 100) + ggtitle("Distribution of Film Budgets") + xlab("Budget (USD)") + ylab("Count")
+
+ggplot(final_table, aes(x=revenue)) + geom_histogram(bins = 100)  + ggtitle("Distribution of Film Revenues") + xlab("Revenue (USD)") + ylab("Count")
+
+
+# The logarithm of both budget and revenue appear more homogenously distributed
+ggplot(final_table, aes(x=log(budget))) + geom_histogram(bins = 100) + ggtitle("Distribution of Log of Film Budgets") + xlab("Log of Budget (USD)") + ylab("Count")
+
+ggplot(final_table, aes(x=log(revenue))) + geom_histogram(bins = 100) + ggtitle("Distribution of Log of Film Revenues") + xlab("Log of Revenue (USD)") + ylab("Count")
+
+ggplot(final_table, aes(x=log(profitability_ratio))) + geom_histogram(bins = 100) + ggtitle("Distribution of Log of Profitability Ratios") + xlab("Log of Ratio") + ylab("Count")
+#Looking at the shape and distribution of profitability ratios, the log of the graph looks pretty well distributed and helps accommodate for anomalies.
+
+ggplot(final_table, aes(x=runtime)) + geom_histogram(bins = 100) + ggtitle("Distribution of Film Runtime") + xlab("Runtime (min)") + ylab("Count")
+#runtime appears to be relatively normally distributed overall, except for the narrow group on the lower end of time
+
+ggplot(final_table, aes(x=substr(release_date, start = 1, stop = 2))) + geom_bar() + ggtitle("Distribution of Month of Release Date") + xlab("Month") + ylab("Count")
+#Release date overall looks fairly well distributed over time - the number indicates month, with 1/ - 9/ representing  January to September, and 10 - 12 representing October - December
+
+
+```
+
+```{r}
+
+
+plot(log(final_table$budget), log(final_table$revenue))
+title(main = 'Logarithmic Movie Revenue over Budget')
+# The shape of the relationship looks to be positively correlated, and seems to suggest that a higher budget results in a higher revenue
+
+
+plot(final_table$runtime, log(final_table$revenue))
+title(main = 'Logarithmic Movie Revenue over Movie Runtime')
+
+
+```
+
+```{r}
+
+source('./src/get_robust_se.R')
+
+model <- lm(log(revenue) ~ log(budget) + comedy + drama + family + romance + thriller + animation + adventure + horror + music + crime + sci_fi + action + war + western + fantasy + foreign + mystery + history + documentary, data=final_table)
+
+stargazer(
+  model, 
+  type = 'text', 
+  se = list(get_robust_se(model))
+)
+```
+
+
+
+### Research design
+
+<!-- Type of research design --> 
+<!-- Type of models and goals --> 
+
+
+
+
+## Results
+
+```{r regression table, include=FALSE}
+# stargazer(
+#   mod_pooled_no_covariates,
+#   mod_pooled_with_covariates,
+#   type = 'latex', header = FALSE,
+#   star.cuttoffs = c(0.05, 0.01, 0.001)
+# )
+```
+<!-- Statistical significance and practical significance --> 
+<!-- Other stat tests --> 
+## Limitations
+### Statistical limitations
+<!-- Evaluate problematic large model assumptions --> 
+### Structural limitations
+<!-- Omitted variables --> 
+## Conclusion and Discussion 
+
+<!-- Key insights --> 
