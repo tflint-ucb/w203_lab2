@@ -39,9 +39,9 @@ The products of this analysis will include the code and final datasets, as well 
 ```{r setup, include=FALSE}
 d <- read.csv('./src/data/Clean_Data_set.csv')
 
-actors <- read.csv('./src/data/Greatest Actors List.csv')
+actors_df <- read.csv('./src/data/Greatest Actors List.csv')
 
-directors <- read.csv('./src/data/Greatest Directors List.csv')
+directors_df <- read.csv('./src/data/Greatest Directors List.csv')
 ```
 
 
@@ -49,6 +49,10 @@ directors <- read.csv('./src/data/Greatest Directors List.csv')
 # exclude unnecessary variables
 excluded_variables <- names(d) %in% c("homepage", "overview", "imdb_id", "popularity", "poster_path", "status", "tagline", "title", "Keywords", "production_companies", "production_countries", "spoken_languages", "cast", "crew")
 short_data <- d[!excluded_variables]
+
+#remove empty actors entry
+actors_df<- actors_df[(actors_df$Name != ''),]
+
 ```
 
 ```{r clean data, include=FALSE}
@@ -68,7 +72,18 @@ clean_data$belongs_to_collection[clean_data$belongs_to_collection == ""] <- FALS
 
 
 ```{r}
+top_actors <- actors_df$Name
+count_top_actors <- function(list) {
+  counter <- 0
+  for (actor in top_actors) {
+    if (regexpr(actor, list) >= 0) {
+      counter <- counter + 1
+    }
+  }
+  return(counter)
+}
 
+clean_data$actor_score <- apply(clean_data, 1, FUN = count_top_actors)
 ```
 
 ```{r}
