@@ -10,42 +10,98 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
 library(ggplot2) 
+library(jsonlite)
 
 library(sandwich)
 library(stargazer)
 ```
 
+## Introduction
+
+<!-- Possibly add more about why the models are constructed the way they are --> 
+
+What makes a movie “one of the greats”? While that question may elude both data analysts and artists for years to come, we are looking to  find some effective indicators of box office success for films, in the hopes of maintaining a thriving movie industry for years to come. This project will focus on several commonly cited reasons for movie fiscal success and analyze how much of an impact each factor has. 
+
+The client for this analysis could be any major movie studio or its parent company, e.g. NBCUniversal or Walt Disney Studios. This is a significant issue, because box office sales decreased by 60% in 2020 during COVID-19 pandemic, leaving the movie theaters empty for months. This analysis will provide clues for what a studio can do to speed up the recovery and account for lost revenue.
+The datasets we’ll use for this analysis come from NBCUniversal directly, as well as several assembled lists from online polls (e.g. “Greatest Actors/Actresses of All Time” - Ranker.com). 
+We’re planning on using profitability as the response variable for analysis in this study - using R to clean the empty and irrelevant cells, a “profitability ratio” can be determined for each movie based on its box office sales divided by budget (and controlling for foreign films and currencies). In assessing the value of name-brand recognition in Hollywood, we’ll use R and its extensions to cross-check the presence of the “greatest” actors and actresses of all time, assigning a count to each movie to later plot against profitability. We’ll be using an Ordinary Least Squares regression model to predict movie success as a factor of famous actor/director presence, online ratings, and other variables that we find significant.
+
+Once we obtain an accurate model, we can obtain numbers such as the monetary value of a single point increase in rating, to explain the trends and interpret results. We can consider several situations accounting for premiere dates, return on investment (ROI), runtime along variables mentioned earlier. While there are certain limitations to this data set and analysis e.g. limited number of data points, some data entry errors,  inaccurate labeling and biased focus on foreign films, and subjective descriptions of the movies, this should serve as a tool and starting point for aspiring and current filmmakers.
+
+The products of this analysis will include the code and final datasets, as well as a written summary of the significant results. 
+
+
+## Data and Research Design
+
+### Data
 
 
 ```{r setup, include=FALSE}
 d <- read.csv('./src/data/Clean_Data_set.csv')
 
-actors <- read.csv('./src/data/Greatest Actors List.csv')
+actors_df <- read.csv('./src/data/Greatest Actors List.csv')
 
-directors <- read.csv('./src/data/Greatest Directors List.csv')
+directors_df <- read.csv('./src/data/Greatest Directors List.csv')
 ```
 
 
 ```{r setup, include=FALSE}
-summary(d)
+# exclude unnecessary variables
+excluded_variables <- names(d) %in% c("homepage", "overview", "imdb_id", "popularity", "poster_path", "status", "tagline", "title", "Keywords", "production_companies", "production_countries", "spoken_languages", "cast", "crew")
+short_data <- d[!excluded_variables]
 
-short_data <- drop(d$dvd_release)
+#remove empty actors entry
+actors_df<- actors_df[(actors_df$Name != ''),]
+
+#rename director columns
+names(directors_df)[names(directors_df) == 'Name'] <- 'director_name'
+names(directors_df)[names(directors_df) == 'Score'] <- 'director_score'
+names(short_data)[names(short_data) == 'director'] <- 'director_name'
 
 
-# exclude variables "production", "dvd_release", "imdbid", poster, keywords
-myvars <- names(d) %in% c("production", "dvd_release", "imdbid", "poster", "keywords")
-short_data <- d[!myvars]
+#drop unnecessary director columns
+excluded_variables <- names(directors_df) %in% c("Rank", "Count", "M.or.F")
+directors_df <- directors_df[!excluded_variables]
+```
+
+```{r clean data, include=FALSE}
+# Remove entries without budget or genre or cast
+clean_data<-short_data[(short_data$budget > 0),]
+clean_data<-clean_data[(clean_data$actors != "[]"),]
+clean_data<-clean_data[(clean_data$directors != "[]"),]
+# Convert belongs_to_collection to a True or False variable
+clean_data$belongs_to_collection[clean_data$belongs_to_collection != ""] <- TRUE
+clean_data$belongs_to_collection[clean_data$belongs_to_collection == ""] <- FALSE
+
+# Convert belongs_to_collection to a True or False variable
+clean_data$belongs_to_collection[clean_data$belongs_to_collection != ""] <- TRUE
+clean_data$belongs_to_collection[clean_data$belongs_to_collection == ""] <- FALSE
 
 ```
 
-```{r}
-6 == 9
+
+```{r add actor score, include=FALSE}
+top_actors <- actors_df$Name
+count_top_actors <- function(list) {
+  counter <- 0
+  for (actor in top_actors) {
+    if (regexpr(actor, list[12]) >= 0) {
+      counter <- counter + 1
+    }
+  }
+  return(counter)
+}
+
+clean_data$actor_score <- apply(clean_data, 1, FUN = count_top_actors)
 ```
 
-
+```{r add director score, include=FALSE}
+merged_data <- merge(clean_data, directors_df, by = "director_name", all.x = TRUE)
+merged_data$director_score[is.na(merged_data$director_score)] <- 0
+```
 
 ```{r}
-final_table <- short_data %>% 
+final_table <- merged_data %>% 
   mutate(
     comedy = case_when(
       #encode comedy, and all subsequent genres as binary
@@ -124,13 +180,7 @@ final_table <- short_data %>%
       regexpr('Documentary', genres) >= 0 ~ 1, 
       regexpr('Documentary', genres) == -1 ~ 0)
     
-    ) %$% 
-  #prop.table(
-  #  table(
-  #    party_identity, 
-  #    presidential_vote)
-    
-    #)
+    )
   
   
 final_table
@@ -166,4 +216,38 @@ title(main = 'Logarithmic Movie Revenue over Movie Runtime', xlab = 'Runtime', y
 
 ```
 
+### Research design
 
+<!-- Type of research design --> 
+<!-- Type of models and goals --> 
+
+
+## Statistical Model
+
+<!-- EDA  --> 
+<!-- At least three model specifications: one with key variables, two defensible models  --> 
+
+<!-- What are we measuring --> 
+<!-- Covariates, problems with covariates --> 
+<!-- Transformations --> 
+
+## Results
+
+```{r regression table, include=FALSE}
+# stargazer(
+#   mod_pooled_no_covariates,
+#   mod_pooled_with_covariates,
+#   type = 'latex', header = FALSE,
+#   star.cuttoffs = c(0.05, 0.01, 0.001)
+# )
+```
+<!-- Statistical significance and practical significance --> 
+<!-- Other stat tests --> 
+## Limitations
+### Statistical limitations
+<!-- Evaluate problematic large model assumptions --> 
+### Structural limitations
+<!-- Omitted variables --> 
+## Conclusion and Discussion 
+
+<!-- Key insights --> 
