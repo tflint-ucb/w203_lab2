@@ -37,11 +37,6 @@ Once we obtain an accurate model, we can obtain numbers such as the monetary val
 The products of this analysis will include the code and final datasets, as well as a written summary of the significant results. 
 
 
-## Data and Research Design
-
-### Data
-
-
 ```{r setup, include=FALSE}
 d <- read.csv('./src/data/Clean_Data_set.csv')
 
@@ -295,11 +290,75 @@ title(main = 'Logarithmic Movie Revenue over Movie Runtime', xlab = 'Runtime', y
 
 ```
 
+
+
+## Research Question, Underlying Model and Study Design
+
+### Research Question
+
+This study intends to find significant relationships between factors known before a movie release and its box office success. We will look at both its profitability ratio (defined as box office divided by its budget) and its box office as ways of measuring a movie's success.
+
+The results of this study could be used by film makers to better inform their investment decisions.
+
+### Underlying Model
+
+As mentioned in the introduction, we plan on using commonly cited reasons for movie's financial success to create our models, starting with a simplified model with just the key variables, and then add more variables we hypothesize could have an effect on a movie's financial success to the following models
+
+#### Simplified model
+
+The most simple and straight forward way of predicting a movie's box office would be its budget. The relationship is pretty clear. The more money that is put into a project the better it is expected to do. One would also expect the increase budget would go into improving the quality of the movie that in turn should increase its box office performance.
+
+```{r}
+
+ggplot(final_table, aes(x=budget/1000000, y=revenue/1000000)) + geom_point() + labs(
+  title = 'Movie Revenue over Budget',
+  x = "Budget in MM USD",
+  y = "Revenue in MM USD"
+)
+
+ggplot(final_table, aes(x=log(budget), y=log(revenue))) + geom_point() + labs(
+  title = 'Logarithmic Movie Revenue over Budget',
+  x = "Log of. Budget in USD",
+  y = "Log of Revenue in USD"
+)
+
+```
+
+As seen in the previous charts, there is a clear positive relationship between budget and revenue, both for with and without a logarithmic transformation. This contributes to our hypothesis than a higher budget leads to a better box office.
+
+#### Seasonality
+
+Just like for a lot of other industries, we expect for there to be a seasonal effect on a movie's box office success. We theorize that the effect of seasonality in the movie industry comes from both the demand and the supply.
+
+Certain times of the year tend to attract more moviegoers, such as the summer, the holiday season and certain weekends that coincide with important holidays (Christmas, 4th of July weekend, Memorial Day weekend, among others). This increase demand would lead to a better box office performance.
+
+On the other hand, supply is also affected by seasonality. Big budget movies are more likely to be released during a time of the year that could help them maximize their potential revenue. 
+
+This self-selection on the supply side is likely to have an effect on the demand as well, as a greater number of quality movies during certain times would attract more movie goers.
+
+Our model will control for this effect by adding the month of release to the model.
+
 ### Research design
 
 <!-- Type of research design --> 
 <!-- Type of models and goals --> 
 
+### Data
+
+As mentioned before our main dataset comes from data extracted from The Movie Database (TMDB - https://www.themoviedb.org/). This dataset was compiled by Kaggle for a Machine Learning competition a few years ago.
+
+The original dataset consists of 22 variables for over 7000 films, from the 1920s to 2017. This dataset consists of objective data for each of these movies such as budget, revenue, cast, crew, release date, production company, original language among others.
+
+We also added two more datasets consisting of two lists with a ranking of the "Top 100 movie actors of all time", as well as the top "Top 50 directors". Unlike the previous dataset, these ranks is subjective, but we plan on using these lists to help us create a variable that could stand in for an actor's or director's popularity.
+
+We performed some data cleaning operations on the main dataset in order to have it be ready for our analysis. These included:
+
+- Eliminating any entries that had some vital information missing (such as revenue, budget, cast, crew and genres)
+- Parsing certain fields from a stringified JSON.
+- Creating the "Actors" column from the "Cast" column
+- Extracting the Director from the "Crew" column
+
+After completing this process we still had over 5000 entries.
 
 ## Statistical Model
 
