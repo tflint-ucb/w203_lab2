@@ -53,6 +53,15 @@ short_data <- d[!excluded_variables]
 #remove empty actors entry
 actors_df<- actors_df[(actors_df$Name != ''),]
 
+#rename director columns
+names(directors_df)[names(directors_df) == 'Name'] <- 'director_name'
+names(directors_df)[names(directors_df) == 'Score'] <- 'director_score'
+names(short_data)[names(short_data) == 'director'] <- 'director_name'
+
+
+#drop unnecessary director columns
+excluded_variables <- names(directors_df) %in% c("Rank", "Count", "M.or.F")
+directors_df <- directors_df[!excluded_variables]
 ```
 
 ```{r clean data, include=FALSE}
@@ -71,12 +80,12 @@ clean_data$belongs_to_collection[clean_data$belongs_to_collection == ""] <- FALS
 ```
 
 
-```{r}
+```{r add actor score, include=FALSE}
 top_actors <- actors_df$Name
 count_top_actors <- function(list) {
   counter <- 0
   for (actor in top_actors) {
-    if (regexpr(actor, list) >= 0) {
+    if (regexpr(actor, list[12]) >= 0) {
       counter <- counter + 1
     }
   }
@@ -86,8 +95,13 @@ count_top_actors <- function(list) {
 clean_data$actor_score <- apply(clean_data, 1, FUN = count_top_actors)
 ```
 
+```{r add director score, include=FALSE}
+merged_data <- merge(clean_data, directors_df, by = "director_name", all.x = TRUE)
+merged_data$director_score[is.na(merged_data$director_score)] <- 0
+```
+
 ```{r}
-final_table <- clean_data %>% 
+final_table <- merged_data %>% 
   mutate(
     comedy = case_when(
       #encode comedy, and all subsequent genres as binary
