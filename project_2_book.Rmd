@@ -178,9 +178,74 @@ final_table <- merged_data %>%
     
     documentary = case_when(
       regexpr('Documentary', genres) >= 0 ~ 1, 
-      regexpr('Documentary', genres) == -1 ~ 0)
+      regexpr('Documentary', genres) == -1 ~ 0),
     
-    )
+    january = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '1/' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '1/' ~ 0),
+    
+    
+     february = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '2/' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '2/' ~ 0),
+    
+    march = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '3/' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '3/' ~ 0),
+    
+    april = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '4/' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '4/' ~ 0),
+    
+    may = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '5/' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '5/' ~ 0),
+       
+     june = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '6/' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '6/' ~ 0),
+    
+    july = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '7/' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '7/' ~ 0),
+    
+    
+    august = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '8/' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '8/' ~ 0),
+    
+    september = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '9/' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '9/' ~ 0),
+    
+    october = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '10' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '10' ~ 0),
+    
+    november = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '11' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '11' ~ 0),
+    
+    december = case_when(
+      
+      substr(release_date, start = 1, stop = 2) == '12' ~ 1, 
+      substr(release_date, start = 1, stop = 2) != '12' ~ 0)
+    
+    
+  )
+      
+
   
   
 final_table
@@ -202,6 +267,15 @@ ggplot(final_table, aes(x=log(budget))) + geom_histogram(bins = 100)
 ggplot(final_table, aes(x=log(revenue))) + geom_histogram(bins = 100)
 
 ggplot(final_table, aes(x=runtime)) + geom_histogram(bins = 100)
+#runtime appears to be relatively normally distributed overall, except for the narrow group on the lower end of time
+
+
+#ggplot(final_table, aes(x=release_date)) + geom_bar()
+
+
+ggplot(final_table, aes(x=substr(release_date, start = 1, stop = 2))) + geom_bar()
+#Release date overall looks fairly well distributed over time - the number indicates month, with 1/ - 9/ representing  January to September, and 10 - 12 representing October - December
+
 
 ```
 
