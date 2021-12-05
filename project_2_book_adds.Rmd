@@ -59,7 +59,7 @@ actors_df<- actors_df[(actors_df$Name != ''),]
 #rename director columns
 names(directors_df)[names(directors_df) == 'Name'] <- 'director_name'
 names(directors_df)[names(directors_df) == 'Score'] <- 'director_score'
-names(short_data)[names(short_data) == 'director'] <- 'director_name'
+names(short_data)[names(short_data) == 'directors'] <- 'director_name'
 
 
 #drop unnecessary director columns
@@ -68,10 +68,10 @@ directors_df <- directors_df[!excluded_variables]
 ```
 
 ```{r clean data, include=FALSE}
+
 # Remove entries without budget or genre or cast
 clean_data<-short_data[(short_data$budget > 0),]
 clean_data<-clean_data[(clean_data$actors != "[]"),]
-clean_data<-clean_data[(clean_data$directors != "[]"),]
 # Convert belongs_to_collection to a True or False variable
 clean_data$belongs_to_collection[clean_data$belongs_to_collection != ""] <- TRUE
 clean_data$belongs_to_collection[clean_data$belongs_to_collection == ""] <- FALSE
@@ -88,7 +88,7 @@ top_actors <- actors_df$Name
 count_top_actors <- function(list) {
   counter <- 0
   for (actor in top_actors) {
-    if (regexpr(actor, list[12]) >= 0) {
+    if (regexpr(actor, list[11]) >= 0) {
       counter <- counter + 1
     }
   }
@@ -315,6 +315,7 @@ title(main = 'Logarithmic Movie Revenue over Movie Runtime')
 
 source('./src/get_robust_se.R')
 
+#Model for Pure Revenue 
 model <- lm(log(revenue) ~ log(budget) + comedy + drama + family + romance + thriller + animation + adventure + horror + music + crime + sci_fi + action + war + western + fantasy + foreign + mystery + history + documentary, data=final_table)
 
 stargazer(
@@ -322,6 +323,16 @@ stargazer(
   type = 'text', 
   se = list(get_robust_se(model))
 )
+
+#Model for Profitability Ratio
+model <- lm(log(profitability_ratio) ~ log(budget) + comedy + drama + family + romance + thriller + animation + adventure + horror + music + crime + sci_fi + action + war + western + fantasy + foreign + mystery + history + documentary, data=final_table)
+
+stargazer(
+  model, 
+  type = 'text', 
+  se = list(get_robust_se(model))
+)
+
 ```
 
 
