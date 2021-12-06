@@ -5,7 +5,7 @@ date: "November 1, 2021"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r}
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
@@ -38,8 +38,23 @@ The products of this analysis will include the code and final datasets, as well 
 
 ### Data
 
+As mentioned before our main dataset comes from data extracted from The Movie Database (TMDB - https://www.themoviedb.org/). This dataset was compiled by Kaggle for a Machine Learning competition a few years ago.
 
-```{r setup, include=FALSE}
+The original dataset consists of 22 variables for over 7000 films, from the 1920s to 2017. This dataset consists of objective data for each of these movies such as budget, revenue, cast, crew, release date, production company, original language among others.
+
+We also added two more datasets consisting of two lists with a ranking of the "Top 100 movie actors of all time", as well as the top "Top 50 directors". Unlike the previous dataset, these ranks is subjective, but we plan on using these lists to help us create a variable that could stand in for an actor's or director's popularity.
+
+We performed some data cleaning operations on the main dataset in order to have it be ready for our analysis. These included:
+
+- Eliminating any entries that had some vital information missing (such as revenue, budget, cast, crew and genres)
+- Parsing certain fields from a stringified JSON.
+- Creating the "Actors" column from the "Cast" column
+- Extracting the Director from the "Crew" column
+
+After completing this process we still had over 5000 entries.
+
+
+```{r}
 d <- read.csv('./src/data/Clean_Data_set.csv')
 
 actors_df <- read.csv('./src/data/Greatest Actors List.csv')
@@ -48,7 +63,7 @@ directors_df <- read.csv('./src/data/Greatest Directors List.csv')
 ```
 
 
-```{r setup, include=FALSE}
+```{r}
 # exclude unnecessary variables
 excluded_variables <- names(d) %in% c("homepage", "overview", "imdb_id", "popularity", "poster_path", "status", "tagline", "title", "Keywords", "production_companies", "production_countries", "spoken_languages", "cast", "crew")
 short_data <- d[!excluded_variables]
@@ -67,15 +82,12 @@ excluded_variables <- names(directors_df) %in% c("Rank", "Count", "M.or.F")
 directors_df <- directors_df[!excluded_variables]
 ```
 
+
 ```{r clean data, include=FALSE}
 
 # Remove entries without budget or genre or cast
 clean_data<-short_data[(short_data$budget > 0),]
 clean_data<-clean_data[(clean_data$actors != "[]"),]
-# Convert belongs_to_collection to a True or False variable
-clean_data$belongs_to_collection[clean_data$belongs_to_collection != ""] <- TRUE
-clean_data$belongs_to_collection[clean_data$belongs_to_collection == ""] <- FALSE
-
 # Convert belongs_to_collection to a True or False variable
 clean_data$belongs_to_collection[clean_data$belongs_to_collection != ""] <- TRUE
 clean_data$belongs_to_collection[clean_data$belongs_to_collection == ""] <- FALSE
@@ -98,8 +110,10 @@ count_top_actors <- function(list) {
 clean_data$actor_score <- apply(clean_data, 1, FUN = count_top_actors)
 ```
 
+
 ```{r add director score, include=FALSE}
 merged_data <- merge(clean_data, directors_df, by = "director_name", all.x = TRUE)
+
 merged_data$director_score[is.na(merged_data$director_score)] <- 0
 ```
 
@@ -254,24 +268,65 @@ final_table <- merged_data %>%
     
     
   )
-      
-
-  
-  
-final_table
 ```
+
+
+### Research design
+
+<!-- Type of research design --> 
+<!-- Type of models and goals --> 
+
+## Research Question, Underlying Model and Study Design
+
+### Research Question
+
+This study intends to find significant relationships between factors known before a movie release and its box office success. We will look at both its profitability ratio (defined as box office divided by its budget) and its box office as ways of measuring a movie's success.
+
+The results of this study could be used by film makers to better inform their investment decisions.
+
+### Underlying Model
+
+As mentioned in the introduction, we plan on using commonly cited reasons for movie's financial success to create our models, starting with a simplified model with just the key variables, and then add more variables we hypothesize could have an effect on a movie's financial success to the following models
+
+#### Simplified model
+
+The most simple and straight forward way of predicting a movie's box office would be its budget. The relationship is pretty clear. The more money that is put into a project the better it is expected to do. One would also expect the increase budget would go into improving the quality of the movie that in turn should increase its box office performance.
+
+```{r}
+
+ggplot(final_table, aes(x=budget/1000000, y=revenue/1000000)) + geom_point() + labs(
+  title = 'Movie Revenue over Budget',
+  x = "Budget in MM USD",
+  y = "Revenue in MM USD"
+)
+
+ggplot(final_table, aes(x=log(budget), y=log(revenue))) + geom_point() + labs(
+  title = 'Logarithmic Movie Revenue over Budget',
+  x = "Log of. Budget in USD",
+  y = "Log of Revenue in USD"
+)
+
+```
+
+As seen in the previous charts, there is a clear positive relationship between budget and revenue, both for with and without a logarithmic transformation. This contributes to our hypothesis than a higher budget leads to a better box office.
+
+#### Seasonality
+
+Just like for a lot of other industries, we expect for there to be a seasonal effect on a movie's box office success. We theorize that the effect of seasonality in the movie industry comes from both the demand and the supply.
+
+Certain times of the year tend to attract more moviegoers, such as the summer, the holiday season and certain weekends that coincide with important holidays (Christmas, 4th of July weekend, Memorial Day weekend, among others). This increase demand would lead to a better box office performance.
+
+On the other hand, supply is also affected by seasonality. Big budget movies are more likely to be released during a time of the year that could help them maximize their potential revenue. 
+
+This self-selection on the supply side is likely to have an effect on the demand as well, as a greater number of quality movies during certain times would attract more movie goers.
+
+Our model will control for this effect by adding the month of release to the model.
 
 
 ## Statistical Model
 
 <!-- EDA  --> 
-<!-- At least three model specifications: one with key variables, two defensible models  --> 
 
-We are running two models - one with the log of gross revenue as the dependent variable, and the independent variables being the log of budget and the listed genres. The other model ______________________________________________________________________________________________________________________________________________________________________________________________________________________________________INSERT TEXT HERE________________________________________________________________________________________________________________________________________________________________________________________________
-
-<!-- What are we measuring --> 
-<!-- Covariates, problems with covariates --> 
-<!-- Transformations --> 
 
 ```{r}
 
@@ -300,52 +355,74 @@ ggplot(final_table, aes(x=substr(release_date, start = 1, stop = 2))) + geom_bar
 ```{r}
 
 
-plot(log(final_table$budget), log(final_table$revenue))
-title(main = 'Logarithmic Movie Revenue over Budget')
+plot(log(final_table$budget), log(final_table$revenue), main = 'Logarithmic Movie Revenue over Budget', xlab = 'Log of Budget', ylab = 'Log of Revenue')
 # The shape of the relationship looks to be positively correlated, and seems to suggest that a higher budget results in a higher revenue
 
 
-plot(final_table$runtime, log(final_table$revenue))
-title(main = 'Logarithmic Movie Revenue over Movie Runtime')
+plot(final_table$runtime, log(final_table$revenue), main = 'Logarithmic Movie Revenue over Movie Runtime', xlab = 'Runtime', ylab = 'Log of Revenue')
+
 
 
 ```
+
+
+<!-- At least three model specifications: one with key variables, two defensible models  --> 
+
+<!-- What are we measuring --> 
+<!-- Covariates, problems with covariates --> 
+<!-- Transformations --> 
+
+We are running two models - one with the log of gross revenue as the dependent variable, and the independent variables being the log of budget and the listed genres. The other model ______________________________________________________________________________________________________________________________________________________________________________________________________________________________________INSERT TEXT HERE________________________________________________________________________________________________________________________________________________________________________________________________
 
 ```{r}
 
 source('./src/get_robust_se.R')
 
 #Model for Pure Revenue 
-model <- lm(log(revenue) ~ log(budget) + comedy + drama + family + romance + thriller + animation + adventure + horror + music + crime + sci_fi + action + war + western + fantasy + foreign + mystery + history + documentary, data=final_table)
+model_1 <- lm(log(revenue) ~ log(budget), data=final_table)
 
-stargazer(
-  model, 
-  type = 'text', 
-  se = list(get_robust_se(model))
-)
+#Model for Pure Revenue 
+model_2 <- lm(log(revenue) ~ log(budget) + comedy + drama + family + romance + thriller + animation + adventure + horror + music + crime + sci_fi + action + war + western + fantasy + foreign + mystery + history + documentary, data=final_table)
 
 #Model for Profitability Ratio
-model <- lm(log(profitability_ratio) ~ log(budget) + comedy + drama + family + romance + thriller + animation + adventure + horror + music + crime + sci_fi + action + war + western + fantasy + foreign + mystery + history + documentary, data=final_table)
+#model_2 <- lm(log(profitability_ratio) ~ log(budget) + comedy + drama + family + romance + thriller + animation + adventure + horror + music + crime + sci_fi + action + war + western + fantasy + foreign + mystery + history + documentary, data=final_table)
 
+#Model for Pure Revenue and all other variables
+model_3 <- lm(log(revenue) ~ log(budget) + comedy + drama + family + romance + thriller + animation + adventure + horror + music + crime + sci_fi + action + war + western + fantasy + foreign + mystery + history + documentary + runtime + actor_score + director_score + native_english_film + february + march + april + may + june + july + august + september + october + november + december + belongs_to_collection, data=final_table)
+
+```
+
+
+
+## Results
+
+Model 1:
+
+
+Model 2:
+
+Model 3:
+
+
+```{r}
 stargazer(
-  model, 
+  model_1, 
+  model_2,
+  model_3,
   type = 'text', 
   se = list(get_robust_se(model))
 )
 
 ```
 
+```{r}
 
+library(lmtest)
+vcov_model_3 <- vcovHC(model_3, type='const')
+coeftest(model_3, vcov=vcov_model_3)
 
-### Research design
+```
 
-<!-- Type of research design --> 
-<!-- Type of models and goals --> 
-
-
-
-
-## Results
 
 ```{r regression table, include=FALSE}
 # stargazer(
