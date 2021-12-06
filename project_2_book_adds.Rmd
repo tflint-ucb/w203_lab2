@@ -321,6 +321,14 @@ This study intends to find significant relationships between factors known befor
 
 The results of this study could be used by film makers to better inform their investment decisions.
 
+### Study Design
+
+We will use the gathered data to answer our research question by finding possible causal relationships between our selected variables and a movie's box office revenue.
+
+We will first conduct an exploratory data analysis on each of our variables, as well as commonly cited relationships, in order to decide which variables could potentially have a causal relationship with a movie's revenue.
+
+Since we are trying to find causal relationships we will focus solely on factors that could be known or decided on before a movie is released, so variables like Rotten Tomatoes rating, word of mouth, or awards will not be considered.
+
 ### Underlying Model
 
 As mentioned in the introduction, we plan on using commonly cited reasons for movie's financial success to create our models, starting with a simplified model with just the key variables, and then add more variables we hypothesize could have an effect on a movie's financial success to the following models
