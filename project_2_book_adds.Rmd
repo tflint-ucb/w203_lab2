@@ -8,7 +8,7 @@ output:
 ---
 
 ```{r, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
 
 library(tidyverse)
 library(ggplot2) 
@@ -21,8 +21,6 @@ library(stringr)
 ```
 
 ## Introduction
-
-<!-- Possibly add more about why the models are constructed the way they are --> 
 
 What makes a movie “one of the greats”? While that question may elude both data analysts and artists for years to come, we are looking to  find some effective indicators of box office success for films, in the hopes of maintaining a thriving movie industry for years to come. This project will focus on several commonly cited reasons for movie fiscal success and analyze how much of an impact each factor has. 
 
@@ -90,13 +88,13 @@ directors_df <- directors_df[!excluded_variables]
 ```{r clean data, include=FALSE}
 # Remove entries without budget revenue or genre or actors
 clean_data<-short_data[(short_data$budget > 0),]
+clean_data<-clean_data[(clean_data$runtime > 0),]
 clean_data<-clean_data[(clean_data$actors != "[]"),]
 clean_data<-clean_data[!(is.na(clean_data$revenue)),]
 
 # Convert belongs_to_collection to a True or False variable
 clean_data$belongs_to_collection[clean_data$belongs_to_collection != ""] <- TRUE
 clean_data$belongs_to_collection[clean_data$belongs_to_collection == ""] <- FALSE
-
 
 ```
 
@@ -380,7 +378,7 @@ If we just look at the distribution, we'll notice that more movies come out in t
 p1 <- ggplot(final_table, aes(x=factor(month_of_release))) + geom_bar() + ggtitle("Distribution of Month of Release Date") + xlab("Month") + ylab("Count")
 
 p2 <- ggplot(final_table, aes(x=factor(month_of_release), y=revenue/1000000)) +  
-       stat_summary(fun.y = mean, geom="bar", size = 1)  + ggtitle("Average Revenue (MM USD) by Month of Release Date") + xlab("Month") + ylab("Revenue")
+       stat_summary(fun = mean, geom="bar", size = 1)  + ggtitle("Average Revenue (MM USD) by Month of Release Date") + xlab("Month") + ylab("Revenue")
 
 grid.arrange(p1, p2, nrow = 2)
 ```
@@ -413,12 +411,12 @@ A similar thing happens when we look at the "Actor score" variable. Movies with 
 p1 <- ggplot(final_table, aes(x=factor(director_score))) + geom_bar() + ggtitle("Distribution of Director Score") + xlab("Director Score") + ylab("Count")
 
 p2 <- ggplot(final_table, aes(x=factor(director_score), y=revenue/1000000)) +  
-       stat_summary(fun.y = mean, geom="bar", size = 1)  + ggtitle("Average Revenue (MM USD) vs Director Score") + xlab("Director Score") + ylab("Revenue")
+       stat_summary(fun = mean, geom="bar", size = 1)  + ggtitle("Average Revenue (MM USD) vs Director Score") + xlab("Director Score") + ylab("Revenue")
 
 p3 <- ggplot(final_table, aes(x=factor(actor_score))) + geom_bar() + ggtitle("Distribution of Actor Score") + xlab("Actor Score") + ylab("Count")
 
 p4 <- ggplot(final_table, aes(x=factor(actor_score), y=revenue/1000000)) +  
-       stat_summary(fun.y = mean, geom="bar", size = 1)  + ggtitle("Average Revenue (MM USD) vs Actor Score") + xlab("Actor Score") + ylab("Revenue")
+       stat_summary(fun = mean, geom="bar", size = 1)  + ggtitle("Average Revenue (MM USD) vs Actor Score") + xlab("Actor Score") + ylab("Revenue")
 
 grid.arrange(p1, p2, p3, p4, nrow = 2)
 ```
@@ -436,7 +434,7 @@ An initial EDA shows that movies that belong to a collection have a significantl
 ```{r echo=FALSE}
 
 ggplot(final_table, aes(x=belongs_to_collection, y=revenue/1000000)) +  
-       stat_summary(fun.y = mean, geom="bar", size = 1)  + ggtitle("Average Revenue (MM USD) vs Being part of a Franchise") + xlab("Part of a collection?") + ylab("Revenue")
+       stat_summary(fun = mean, geom="bar", size = 1)  + ggtitle("Average Revenue (MM USD) vs Being part of a Franchise") + xlab("Part of a collection?") + ylab("Revenue")
 ```
 
 #### Where is the movie from?
@@ -450,7 +448,7 @@ Our initial EDA shows us that there is indeed a clear difference between movies 
 ```{r echo=FALSE}
 
 ggplot(final_table, aes(x=native_english_film, y=revenue/1000000)) +  
-       stat_summary(fun.y = mean, geom="bar", size = 1)  + ggtitle("Average Revenue (MM USD) vs Is the movie in English?") + xlab("Is the movie in English?") + ylab("Revenue")
+       stat_summary(fun = mean, geom="bar", size = 1)  + ggtitle("Average Revenue (MM USD) vs Is the movie in English?") + xlab("Is the movie in English?") + ylab("Revenue")
 ```
 
 #### How long is the movie?
@@ -543,7 +541,7 @@ model_2 <- lm(log(revenue) ~ log(budget) + comedy + drama + family + romance + t
 model_3 <- lm(log(revenue) ~ log(budget) + comedy + drama + family + romance + thriller + animation + adventure + horror + music + crime + sci_fi + action + war + western + fantasy + foreign + mystery + history + documentary + runtime + actor_score + director_score + native_english_film + february + march + april + may + june + july + august + september + october + november + december + belongs_to_collection, data=final_table)
 
 #Model that proved to have the most statistically and practically significant variables
-model_4 <- lm(log(revenue) ~ log(budget) + adventure + horror + foreign + runtime + actor_score + director_score + native_english_film + july + belongs_to_collection, data=final_table)
+model_4 <- lm(log(revenue) ~ log(budget) + adventure + drama + romance + horror + foreign + runtime + actor_score + director_score + native_english_film + april + june + july + december + belongs_to_collection, data=final_table)
 
 ```
 
@@ -561,11 +559,10 @@ stargazer(
   model_4,
   type = 'latex', header = FALSE,
   column.sep.width = "1pt",
-  font.size="small",
+  font.size="tiny",
   no.space = TRUE
   #se = list(get_robust_se(model))
 )
-
 ```
 
 
@@ -581,7 +578,7 @@ vcov_model_2 <- vcovHC(model_2, type='const')
 coeftest(model_2, vcov=vcov_model_2)
 ```
 
-We will evaluate the release month in the same way to make sure we're not proving a variable to be significant by chance. We'll multiply each p-value by 11 because there are 11 month variables in the model. Which leaves us with July as a significant variables, where June and December don't meet that level of significance and only July is proving to be significant.
+We considered evaluating the release months in the same way to make sure we're not proving a variable to be significant by chance. We'll multiply each p-value by 12 because there are 12 month variables in the model. Which leaves us with July and December as a significant variables, where June doesn't meet that level of significance and only July and Dcember are proving to be significant.
 
 ```{r, include=FALSE}
 
@@ -654,15 +651,28 @@ Having said that, it's very likely that a marketing budget will be heavily corre
 
 Just like with the quality, we would expect a good marketing strategy to have a positive effect on the revenue, as well as a positive effect on related variables such as the Actors Score.
 
-
 ## Conclusion and Discussion 
 
 Considering the limitations of our study, we found reasonable results in trying to answer whether we can build a predictive model to measure movie box office success. We used one of the largest movie databases and selected a random sample. We focused on the variables that could be obtained before movie production and release to justify using such a model in the movie consideration process. We identified a relationship between movie budget and revenue and were able to find additional significant covariates. Finally, we considered the limitations of the covariates and the model and have tested some of the underlying large sample model assumptions.
 
 To conclude our findings and provide more insight into the movie industry. Although we established a clear relationship between movie budget and revenue, it may not be the only variable to produce a blockbuster. We're finding that movies that are part of a sequel tend to perform well, which may also be explained by the fact that films in a sequel have proven to be popular and were given a budget for more movies to be produced.
 
-We confirmed the seasonality of movie releases when certain months perform better than others. Summer proved to be a good movie season, with July producing more considerable revenues than other months in a year. We also see that native English films tend to do better while foreign films may decrease future profitability.
+We confirmed the seasonality of movie releases when certain months perform better than others. Summer proved to be a good movie season, with July producing more considerable revenues than other months in a year, as well as December being a good month to release movies. However, as mentioned in the Data section, there may be some self-selection element with seasonality, with production companies choosing to release high budget movies during those months. 
+
+We also see that native English films tend to do better while foreign films may decrease future profitability.
 
 We hypothesized that movie genre might be a good predictor and guiding factor for movie industry decision-makers. When considering movies in the horror or adventure genre, it could be a safer bet for return on investment.
 
 And finally, the actor score and director scores for measures of popularity of the cast and crew have proved to be significant, with more popular actors bringing more revenue and followed by famous directors.
+
+## The future
+
+If we were to continue with this research, we consider that it would be interesting to separate our dataset into time periods, as movie audiences can vary a lot throughout the years, and as mentioned before, our dataset goes back almost 100 years. In particular, perhaps a research that focuses just on the last 20 years may be more practically significant than one that uses data from all of movie history. We would also need to come up with a way to categorize actors and directors from just this time period in include that variable in our analysis.
+
+Another interesting point to consider would be focusing just on Opening Weekend Box Office. One limitation of our research was the omitted variable of "Quality". While we used other variables as proxys that we hoped would capture the effect of quality, it's still not the perfect solution.
+
+However, if we were to use Opening Weekend Box Office as the dependent variable, instead of total Box Office revenue, then the "Quality" effect would likely be not as meaningful. We assume this would be the case since there wouldn't be enough time for word of mouth to get out and attract more movie goers.
+
+
+
+
