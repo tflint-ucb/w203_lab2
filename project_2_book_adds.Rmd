@@ -406,14 +406,21 @@ Our initial exploratory data analysis showed us that the vast majority of movies
 
 Having a "Top Director" does seem to have a higher average revenue, but what's quite interesting is that the highest revenue is found with the "mid-tier" Top Directors. One explanation could be that the "Best Directors" do not always do films that appeal to mainstream audiences, while the ones towards the middle of the list are both great directors and direct movies that appeal to a wider audience.
 
+A similar thing happens when we look at the "Actor score" variable. Movies with "Top Actors" tend to have a higher average revenue, with this maxing out at 5 "top actors".
+
 ```{r echo=FALSE}
 
-p1 <- ggplot(final_table, aes(x=factor(director_score))) + geom_bar() + ggtitle("Distribution of Director Score") + xlab("Month") + ylab("Count")
+p1 <- ggplot(final_table, aes(x=factor(director_score))) + geom_bar() + ggtitle("Distribution of Director Score") + xlab("Director Score") + ylab("Count")
 
 p2 <- ggplot(final_table, aes(x=factor(director_score), y=revenue/1000000)) +  
        stat_summary(fun.y = mean, geom="bar", size = 1)  + ggtitle("Average Revenue (MM USD) vs Director Score") + xlab("Director Score") + ylab("Revenue")
 
-grid.arrange(p1, p2, nrow = 2)
+p3 <- ggplot(final_table, aes(x=factor(actor_score))) + geom_bar() + ggtitle("Distribution of Actor Score") + xlab("Actor Score") + ylab("Count")
+
+p4 <- ggplot(final_table, aes(x=factor(actor_score), y=revenue/1000000)) +  
+       stat_summary(fun.y = mean, geom="bar", size = 1)  + ggtitle("Average Revenue (MM USD) vs Actor Score") + xlab("Actor Score") + ylab("Revenue")
+
+grid.arrange(p1, p2, p3, p4, nrow = 2)
 ```
 
 #### Genre
@@ -446,28 +453,22 @@ ggplot(final_table, aes(x=native_english_film, y=revenue/1000000)) +
        stat_summary(fun.y = mean, geom="bar", size = 1)  + ggtitle("Average Revenue (MM USD) vs Is the movie in English?") + xlab("Is the movie in English?") + ylab("Revenue")
 ```
 
+#### How long is the movie?
+
+The final covariate that we are considering adding to the movie is runtime. As seen in the distribution chart, most movies tend to be around the 100 minute mark.
+
+If we look at the relationship between log of revenue and runtime, we'll notice that movies with a longer runtime tend to be more grouped together, and their average revenue seems to be higher. While movies closer to the 100 minute mark have a wider range of revenue.
+
+
 ```{r echo=FALSE}
 
-p1 <- ggplot(final_table, aes(x=log(profitability_ratio))) + geom_histogram(bins = 100) + ggtitle("Distribution of Log of Profitability Ratios") + xlab("Log of Ratio") + ylab("Count")
-#Looking at the shape and distribution of profitability ratios, the log of the graph looks pretty well distributed and helps accommodate for anomalies.
+p1 <- ggplot(final_table, aes(x=runtime)) + geom_histogram(bins = 100) + ggtitle("Distribution of Film Runtime") + xlab("Runtime (min)") + ylab("Count")
+#runtime appears to be relatively normally distributed overall, except for the narrow group on the lower end of time
 
-p2 <- ggplot(final_table, aes(x=runtime)) + geom_histogram(bins = 100) + ggtitle("Distribution of Film Runtime") + xlab("Runtime (min)") + ylab("Count")
+p2 <- ggplot(final_table, aes(x=runtime, y=log(revenue))) + geom_point() + ggtitle("Log of Revenue vs Film Runtime") + xlab("Runtime (min)") + ylab("Revenue")
 #runtime appears to be relatively normally distributed overall, except for the narrow group on the lower end of time
 
 grid.arrange(p1, p2, nrow = 2)
-```
-
-```{r echo=FALSE}
-par(mfrow=c(1,2)) 
-
-plot(log(final_table$budget), log(final_table$revenue), main = 'Log Revenue over Budget', xlab = 'Log of Budget', ylab = 'Log of Revenue')
-# The shape of the relationship looks to be positively correlated, and seems to suggest that a higher budget results in a higher revenue
-
-
-plot(final_table$runtime, log(final_table$revenue), main = 'Log Revenue over Runtime', xlab = 'Runtime', ylab = 'Log of Revenue')
-
-
-
 ```
 
 ## Statistical Model
@@ -620,8 +621,6 @@ We are meeting the 2 large model assumptions that are necessary to prove the mod
 ### Structural limitations
 
 Although we've considered a multititude of variables in our model there are some limitations, our actor and director scores are measured only for top 100 actors, actresses and directors at a time when in a movie industry and through social media the popularity of a cast and crew could evolve.
-
-We're also not controlling for inflation when comparing movie revenues throughout the years. A revenue 10 or 20 years ago will be higher if we account for inflation and compare it to movies that were released more recently.
 
 ### Omitted Variables
 
