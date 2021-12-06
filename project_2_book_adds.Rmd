@@ -32,7 +32,7 @@ The main dataset that will be used for this analysis comes from The Movie Databa
 
 We’re planning on using gross revenue as the response variable for analysis in this study - using R to clean the empty and irrelevant cells, a measurable revenue can be determined for each movie based on its box office sales and controlling for foreign films/currencies and inflation, based on time of release.
 
-In order to build our models, we will focus on typical anecdotal factors linked to a movie's financial success, such as budget, date of release, its cast's popularity, and its director's name brand recognition. We will also take into account control variables such as runtime and genre.
+In order to build our models, we will focus on typical anecdotal factors linked to a movie's financial success, such as budget, date of release, its cast's popularity, and its director's name brand recognition. We will also take into account covariates such as runtime and genre.
 
 The products of this analysis will include the code and final datasets, as well as a written summary of the significant results. 
 
