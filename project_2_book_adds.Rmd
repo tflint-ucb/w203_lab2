@@ -145,11 +145,15 @@ merged_data <- merge(merged_data, inflation_df, by.x = "formatted_release_date",
 
 merged_data <- merged_data %>% 
   mutate(
-    comedy = case_when(
-      #encode comedy, and all subsequent genres as binary
-      regexpr('Comedy', genres) >= 0 ~ 1, 
-      regexpr('Comedy', genres) == -1 ~ 0)
+    formatted_release_date = case_when(
+      is.na(CPIAUCNS) ~ str_replace(formatted_release_date, "20", "19"),
+      !(is.na(CPIAUCNS)) ~ formatted_release_date,
+    )
   )
+
+merged_data = subset(merged_data, select = -c(CPIAUCNS) )
+
+merged_data <- merge(merged_data, inflation_df, by.x = "formatted_release_date", by.y= "DATE", all.x = TRUE)
 
 merged_data <- merged_data %>% 
   mutate(
@@ -157,8 +161,6 @@ merged_data <- merged_data %>%
     revenue = revenue * 100 / CPIAUCNS,
   )
 
-
-merged_data<-final_table[is.na(final_table$CPIAUCNS),]
 ```
 
 ```{r, include=FALSE}
@@ -325,6 +327,16 @@ The results of this study could be used by film makers to better inform their in
 
 As mentioned in the introduction, we plan on using commonly cited reasons for movie's financial success to create our models, starting with a simplified model with just the key variables, and then add more variables we hypothesize could have an effect on a movie's financial success to the following models
 
+#### Our outcome variable - Revenue
+
+Given our research question, having revenue be our outcome variable was a natural choice. We considered using profitability ratio, as that would allow us to skip some necessary adjustments (Mainly inflation), however we realized that interpreting the results for profitability ratio made it more complicated than it needed to be.
+
+As mentioned before, if we were to use revenue, we would need to account for inflation. Our dataset goes back almost 100 years, which means that the box office of a movie in the 1920s would be compared to a box office in the 2010s. This would skew our results towards more modern films, which would, all things equal, have a higher box office just because of inflation.
+
+We decided to use the Consumer Price Index for All Urban Consumers: All Items in U.S. City Average (CPIAUCNS) from the Federal Reserve Economic Data website. It uses the years 1982 to 1984 as their base.
+
+We applied this index to both our budget and revenue since those are the only variables that are in USD.
+
 #### Simplified model
 
 The most simple and straight forward way of predicting a movie's box office would be its budget. The relationship is pretty clear. The more money that is put into a project the better it is expected to do. One would also expect the increase budget would go into improving the quality of the movie that in turn should increase its box office performance.
@@ -392,7 +404,7 @@ We have also added a "Director Score" which will reflect a movie's director rank
 
 Our initial exploratory data analysis showed us that the vast majority of movies in our dataset were not made by a "Top Director", however, once we look at the average revenue by director score we notice an interesting shape.
 
-The "best" directors actually have a below average revenue, but the "mid-tier" directors do seem to have above average revenue for their movies.
+Having a "Top Director" does seem to have a higher average revenue, but what's quite interesting is that the highest revenue is found with the "mid-tier" Top Directors. One explanation could be that the "Best Directors" do not always do films that appeal to mainstream audiences, while the ones towards the middle of the list are both great directors and direct movies that appeal to a wider audience.
 
 ```{r echo=FALSE}
 
@@ -422,7 +434,7 @@ ggplot(final_table, aes(x=belongs_to_collection, y=revenue/1000000)) +
 
 #### Where is the movie from?
 
-The global box office is not evenly distributed. While this has changed over the years, the american audience still makes up the biggest chunk of the global box office.
+The global box office is not evenly distributed. While this uneveness has decreased over the years, the American audience still makes up the biggest chunk of the global box office.
 
 Because of this we decided to add a dummy variable that uses a movie's original language. If the movie's original language is in English, then it will have a value of 1, and if it isn't, then 0.
 
@@ -460,14 +472,7 @@ plot(final_table$runtime, log(final_table$revenue), main = 'Log Revenue over Run
 
 ## Statistical Model
 
-<!-- At least three model specifications: one with key variables, two defensible models  --> 
-
-<!-- What are we measuring --> 
-<!-- Covariates, problems with covariates --> 
-<!-- Transformations --> 
-
 We're looking to see which model and variables will be a good approximation for future films' natural logarithm of revenue(in U.S. dollars). We will be building 4 predictive models to help assess our research question of which variables play a more significant role in box office revenues to help the industry recover from the decline in the last year. We start with a simple model with just the `budget` variable. 
-
 
 In the Log Revenue over Budget graph earlier in the report we can see a relationship between budget and film success measured in revenue. For the 2 following models we add covariates to control for additional variables that we expect to be significant. And the final 4th model will include only the variables that proved to be statistically and practically significant.
 
@@ -489,7 +494,7 @@ grid.arrange(p1, p2, p3, p4, nrow = 2)
 
 ```
 
-Two of the covariates that we will be adding is movie genre and release month that will have multiple categories within each variable. Since we will be assessing multiple t-test results we may want to account for p-values that may show significance only because we have numerous categories that we're testing against. We will be multiplying the p-value by the number of genres or months in the model.
+Two of the covariates that we will be adding are movie genre and release month that will have multiple categories within each variable. Since we will be assessing multiple t-test results we may want to account for p-values that may show significance only because we have numerous categories that we're testing against. We will be multiplying the p-value by the number of genres or months in the model.
 
 1) Model 1: Natural logarithm of revenue on a constant and natural logarithm of budget
 
@@ -592,7 +597,6 @@ Our suggested final model will be model 4 that will have practically and statist
 
 ## Limitations
 ### Statistical limitations
-<!-- Evaluate problematic large model assumptions --> 
 
 We will evaluate this model against 2 large model assumptions since we have a sample of well above 100. The first is IID and presence perfectly coliniear variables. 
 
