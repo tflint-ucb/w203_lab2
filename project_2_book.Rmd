@@ -73,10 +73,6 @@ clean_data<-clean_data[(clean_data$actors != "[]"),]
 clean_data$belongs_to_collection[clean_data$belongs_to_collection != ""] <- TRUE
 clean_data$belongs_to_collection[clean_data$belongs_to_collection == ""] <- FALSE
 
-# Convert belongs_to_collection to a True or False variable
-clean_data$belongs_to_collection[clean_data$belongs_to_collection != ""] <- TRUE
-clean_data$belongs_to_collection[clean_data$belongs_to_collection == ""] <- FALSE
-
 ```
 
 
@@ -246,9 +242,6 @@ final_table <- merged_data %>%
   )
       
 
-  
-  
-final_table
 ```
 
 
