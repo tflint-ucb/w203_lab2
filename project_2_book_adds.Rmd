@@ -319,7 +319,7 @@ final_table <- merged_data %>%
 
 ### Research Question
 
-This study intends to find significant relationships between factors known before a movie release and its box office success. We will look at both its profitability ratio (defined as box office divided by its budget) and its box office as ways of measuring a movie's success.
+This study intends to find significant relationships between factors known before a movie release and its box office success. We will look at both its relative box office (in USD) as the way of measuring a movie's success.
 
 The results of this study could be used by film makers to better inform their investment decisions.
 
