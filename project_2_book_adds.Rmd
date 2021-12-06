@@ -1,11 +1,13 @@
 ---
-title: "Lab 2: What Makes a Movie Successful? Fall 2021"
+title: 'Lab 2: What Makes a Movie Successful? Fall 2021'
 author: 'w203: Statistics for Data Science'
 date: "November 1, 2021"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
-```{r}
+```{r, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
@@ -14,6 +16,7 @@ library(jsonlite)
 
 library(sandwich)
 library(stargazer)
+library(gridExtra)
 ```
 
 ## Introduction
@@ -34,10 +37,9 @@ In order to build our models, we decided to focus on some factors that are usual
 The products of this analysis will include the code and final datasets, as well as a written summary of the significant results. 
 
 
-## Data and Research Design
+## Data, Research Question, Underlying Model and Study Design
 
 ### Data
-
 As mentioned before our main dataset comes from data extracted from The Movie Database (TMDB - https://www.themoviedb.org/). This dataset was compiled by Kaggle for a Machine Learning competition a few years ago.
 
 The original dataset consists of 22 variables for over 7000 films, from the 1920s to 2017. This dataset consists of objective data for each of these movies such as budget, revenue, cast, crew, release date, production company, original language among others.
@@ -54,7 +56,7 @@ We performed some data cleaning operations on the main dataset in order to have 
 After completing this process we still had over 5000 entries.
 
 
-```{r}
+```{r, include=FALSE}
 d <- read.csv('./src/data/Clean_Data_set.csv')
 
 actors_df <- read.csv('./src/data/Greatest Actors List.csv')
@@ -63,7 +65,7 @@ directors_df <- read.csv('./src/data/Greatest Directors List.csv')
 ```
 
 
-```{r}
+```{r, include=FALSE}
 # exclude unnecessary variables
 excluded_variables <- names(d) %in% c("homepage", "overview", "imdb_id", "popularity", "poster_path", "status", "tagline", "title", "Keywords", "production_companies", "production_countries", "spoken_languages", "cast", "crew")
 short_data <- d[!excluded_variables]
@@ -119,7 +121,7 @@ merged_data <- merge(clean_data, directors_df, by = "director_name", all.x = TRU
 merged_data$director_score[is.na(merged_data$director_score)] <- 0
 ```
 
-```{r}
+```{r, include=FALSE}
 final_table <- merged_data %>% 
   mutate(
     comedy = case_when(
@@ -273,12 +275,8 @@ final_table <- merged_data %>%
 ```
 
 
-### Research design
-
 <!-- Type of research design --> 
 <!-- Type of models and goals --> 
-
-## Research Question, Underlying Model and Study Design
 
 ### Research Question
 
@@ -296,17 +294,19 @@ The most simple and straight forward way of predicting a movie's box office woul
 
 ```{r}
 
-ggplot(final_table, aes(x=budget/1000000, y=revenue/1000000)) + geom_point() + labs(
+p1 <- ggplot(final_table, aes(x=budget/1000000, y=revenue/1000000)) + geom_point() + labs(
   title = 'Movie Revenue over Budget',
   x = "Budget in MM USD",
   y = "Revenue in MM USD"
 )
 
-ggplot(final_table, aes(x=log(budget), y=log(revenue))) + geom_point() + labs(
-  title = 'Logarithmic Movie Revenue over Budget',
+p2 <- ggplot(final_table, aes(x=log(budget), y=log(revenue))) + geom_point() + labs(
+  title = 'Log Movie Revenue over Budget',
   x = "Log of. Budget in USD",
   y = "Log of Revenue in USD"
 )
+
+grid.arrange(p1, p2, nrow = 1)
 
 ```
 
@@ -384,41 +384,45 @@ Just like with the quality, we would expect a good marketing strategy to have a 
 
 ## Statistical Model
 
-<!-- EDA  --> 
-
 
 ```{r}
 
-ggplot(final_table, aes(x=budget)) + geom_histogram(bins = 100) + ggtitle("Distribution of Film Budgets") + xlab("Budget (USD)") + ylab("Count")
+p1 <- ggplot(final_table, aes(x=budget)) + geom_histogram(bins = 100) + ggtitle("Distribution of Film Budgets") + xlab("Budget (USD)") + ylab("Count")
 
-ggplot(final_table, aes(x=revenue)) + geom_histogram(bins = 100)  + ggtitle("Distribution of Film Revenues") + xlab("Revenue (USD)") + ylab("Count")
+p2 <- ggplot(final_table, aes(x=revenue)) + geom_histogram(bins = 100)  + ggtitle("Distribution of Film Revenues") + xlab("Revenue (USD)") + ylab("Count")
 
 
 # The logarithm of both budget and revenue appear more homogenously distributed
-ggplot(final_table, aes(x=log(budget))) + geom_histogram(bins = 100) + ggtitle("Distribution of Log of Film Budgets") + xlab("Log of Budget (USD)") + ylab("Count")
+p3 <- ggplot(final_table, aes(x=log(budget))) + geom_histogram(bins = 100) + ggtitle("Distribution of Log of Film Budgets") + xlab("Log of Budget (USD)") + ylab("Count")
 
-ggplot(final_table, aes(x=log(revenue))) + geom_histogram(bins = 100) + ggtitle("Distribution of Log of Film Revenues") + xlab("Log of Revenue (USD)") + ylab("Count")
+p4 <- ggplot(final_table, aes(x=log(revenue))) + geom_histogram(bins = 100) + ggtitle("Distribution of Log of Film Revenues") + xlab("Log of Revenue (USD)") + ylab("Count")
 
-ggplot(final_table, aes(x=log(profitability_ratio))) + geom_histogram(bins = 100) + ggtitle("Distribution of Log of Profitability Ratios") + xlab("Log of Ratio") + ylab("Count")
-#Looking at the shape and distribution of profitability ratios, the log of the graph looks pretty well distributed and helps accommodate for anomalies.
-
-ggplot(final_table, aes(x=runtime)) + geom_histogram(bins = 100) + ggtitle("Distribution of Film Runtime") + xlab("Runtime (min)") + ylab("Count")
-#runtime appears to be relatively normally distributed overall, except for the narrow group on the lower end of time
-
-ggplot(final_table, aes(x=substr(release_date, start = 1, stop = 2))) + geom_bar() + ggtitle("Distribution of Month of Release Date") + xlab("Month") + ylab("Count")
-#Release date overall looks fairly well distributed over time - the number indicates month, with 1/ - 9/ representing  January to September, and 10 - 12 representing October - December
-
+grid.arrange(p1, p2, p3, p4, nrow = 2)
 
 ```
 
 ```{r}
 
+p1 <- ggplot(final_table, aes(x=log(profitability_ratio))) + geom_histogram(bins = 100) + ggtitle("Distribution of Log of Profitability Ratios") + xlab("Log of Ratio") + ylab("Count")
+#Looking at the shape and distribution of profitability ratios, the log of the graph looks pretty well distributed and helps accommodate for anomalies.
 
-plot(log(final_table$budget), log(final_table$revenue), main = 'Logarithmic Movie Revenue over Budget', xlab = 'Log of Budget', ylab = 'Log of Revenue')
+p2 <- ggplot(final_table, aes(x=runtime)) + geom_histogram(bins = 100) + ggtitle("Distribution of Film Runtime") + xlab("Runtime (min)") + ylab("Count")
+#runtime appears to be relatively normally distributed overall, except for the narrow group on the lower end of time
+
+p3 <- ggplot(final_table, aes(x=substr(release_date, start = 1, stop = 2))) + geom_bar() + ggtitle("Distribution of Month of Release Date") + xlab("Month") + ylab("Count")
+#Release date overall looks fairly well distributed over time - the number indicates month, with 1/ - 9/ representing  January to September, and 10 - 12 representing October - December
+
+grid.arrange(p1, p2, p3, nrow = 2)
+```
+
+```{r}
+par(mfrow=c(1,2)) 
+
+plot(log(final_table$budget), log(final_table$revenue), main = 'Log Movie Revenue over Budget', xlab = 'Log of Budget', ylab = 'Log of Revenue')
 # The shape of the relationship looks to be positively correlated, and seems to suggest that a higher budget results in a higher revenue
 
 
-plot(final_table$runtime, log(final_table$revenue), main = 'Logarithmic Movie Revenue over Movie Runtime', xlab = 'Runtime', ylab = 'Log of Revenue')
+plot(final_table$runtime, log(final_table$revenue), main = 'Log Movie Revenue over Movie Runtime', xlab = 'Runtime', ylab = 'Log of Revenue')
 
 
 
@@ -431,9 +435,40 @@ plot(final_table$runtime, log(final_table$revenue), main = 'Logarithmic Movie Re
 <!-- Covariates, problems with covariates --> 
 <!-- Transformations --> 
 
-We are running two models - one with the log of gross revenue as the dependent variable, and the independent variables being the log of budget and the listed genres. The other model ______________________________________________________________________________________________________________________________________________________________________________________________________________________________________INSERT TEXT HERE________________________________________________________________________________________________________________________________________________________________________________________________
+We're looking to see which model and variables will be a good approximation for future films' natural logarithm of revenue(in U.S. dollars). We will be building 4 predictive models to help assess our research question of which variables play a crucial role in box office revenues to help the industry recover from the decline in the last year. We start with a simple model with just the `budget` variable. The EDA done earlier in the report shows a relationship between budget and film success measured in revenue. We add covariates to the 2 following models to control for additional variables that we also expect to be significant. And the final 4th model will include only the variables that proved to be statistically and practically significant.
 
-```{r}
+Variable that we're most interested in is budget $\beta_1$, which measures a percent increase or decrease in revenue for every 1% increase in budget. We applied a natural logarithm transformation to both variables because the distribution was skewed towards lower variables. The transformation spread out the values, and the results show that the original data has a more log-normal distribution, making this transformation a good choice to improve our model.
+
+<!-- Add more about issues --> 
+
+Some issues with the covariates could be 
+
+1) Model 1: Natural logarithm of revenue on a constant and natural logarithm of budget
+
+$$
+  log(\text{revenue}) = \beta_0 + \beta_1 log(\text{budget})
+$$ 
+
+<!-- I'm not writing out each beta exactly --> 
+
+2) Model 2: Natural logarithm of revenue on a constant, natural logarithm of budget and genre
+
+$$
+  log(\text{revenue}) = \beta_0 + \beta_1 log(\text{budget}) + \beta_2 \text{genre}
+$$
+
+3) Model 3: Natural logarithm of revenue on a constant, natural logarithm of budget, genre, runtime, actor_score, director_score,release month, indicator variable of native english film and belongs to a collection(if the film is part of a sequel)
+
+$$
+  log(\text{revenue}) = \beta_0 + \beta_1 log(\text{budget}) + \beta_2 \text{genre}
+  + \beta_3 \text{runtime} + \beta_4 \text{actor score} + \beta_5 \text{director score}
+  + \beta_6 \text{native english film} + \beta_7 \text{release month} 
+  + \beta_8 \text{belongs to collecion}
+$$
+
+
+
+```{r, include=FALSE}
 
 source('./src/get_robust_se.R')
 
@@ -443,11 +478,11 @@ model_1 <- lm(log(revenue) ~ log(budget), data=final_table)
 #Model for Pure Revenue 
 model_2 <- lm(log(revenue) ~ log(budget) + comedy + drama + family + romance + thriller + animation + adventure + horror + music + crime + sci_fi + action + war + western + fantasy + foreign + mystery + history + documentary, data=final_table)
 
-#Model for Profitability Ratio
-#model_2 <- lm(log(profitability_ratio) ~ log(budget) + comedy + drama + family + romance + thriller + animation + adventure + horror + music + crime + sci_fi + action + war + western + fantasy + foreign + mystery + history + documentary, data=final_table)
-
 #Model for Pure Revenue and all other variables
 model_3 <- lm(log(revenue) ~ log(budget) + comedy + drama + family + romance + thriller + animation + adventure + horror + music + crime + sci_fi + action + war + western + fantasy + foreign + mystery + history + documentary + runtime + actor_score + director_score + native_english_film + february + march + april + may + june + july + august + september + october + november + december + belongs_to_collection, data=final_table)
+
+#Model that proved to have the most statistically and practically significant variables
+model_4 <- lm(log(revenue) ~ log(budget) + adventure + horror + foreign + runtime + actor_score + director_score + native_english_film + july + belongs_to_collection, data=final_table)
 
 ```
 
@@ -455,26 +490,36 @@ model_3 <- lm(log(revenue) ~ log(budget) + comedy + drama + family + romance + t
 
 ## Results
 
-Model 1:
+We're presenting a regression table below to compare results and find variables that prove to be significant.
 
-
-Model 2:
-
-Model 3:
-
-
-```{r}
+```{r, results = 'asis'}
 stargazer(
   model_1, 
   model_2,
   model_3,
-  type = 'text', 
-  se = list(get_robust_se(model))
+  #model_4,
+  type = 'latex', header = FALSE
+  #se = list(get_robust_se(model))
 )
 
 ```
 
-```{r}
+
+All models are overall significant when looking at F-statistic which means that our linear regression model provides a better fit to the data than a model that contains no independent variables. As we're adding more predictors into the model we want to also evaluate the Adjusted R2 since that metric will account for predictors that improve the overall model more than expected by chance. Across the model we're seeing an increase in Adjusted R2 from most simple model to the most complex, which means that independent variables are capturing the variation in the dependent variable quite well and the addition of covariates is improving the model.
+
+We found that quite a few variables in our consideration proved to be statistically significant. Budget, our main variable in question in the first model is significant because the p-value is below 0.05 threshold and is showing practical significance with a high coefficient. Since both variables were transformed using natural logarithms we can conveniently interpret the results in percents. For every percent increase in budget will have 0.81% increase in revenue. Since this could mean that for every additional dollar in the budget the return will be 80 cents. Which is why we want to interpret additional variables to understand what is the differentiating factor between profitable and not profitable movies.
+
+In the second model when we include genre we have to interpret the statistical significance differently to avoid getting a significant genre by chance since we're evaluating a large number of genres. To make the significance stricter we will multiply the p-value fro genre by 19, since we have 19 coefficients for genre in the model. We conclude that drama may only be significant by chance because we ran multiple t-tests. And we can say that other variables, adventure, horror and foreign genres are significant predictors of revenue.
+
+```{r, include=FALSE}
+library(lmtest)
+vcov_model_2 <- vcovHC(model_2, type='const')
+coeftest(model_2, vcov=vcov_model_2)
+```
+
+We will evaluate the release month in the same way to make sure we're not proving a variable to be significant by chance. We'll multiply each p-value by 11 because there are 11 month variables in the model. Which leaves us with july as a significant variables, where June and Decmber don't meet that level of siginificance and only July is proving to be significant.
+
+```{r, include=FALSE}
 
 library(lmtest)
 vcov_model_3 <- vcovHC(model_3, type='const')
@@ -483,21 +528,42 @@ coeftest(model_3, vcov=vcov_model_3)
 ```
 
 
-```{r regression table, include=FALSE}
-# stargazer(
-#   mod_pooled_no_covariates,
-#   mod_pooled_with_covariates,
-#   type = 'latex', header = FALSE,
-#   star.cuttoffs = c(0.05, 0.01, 0.001)
-# )
-```
-<!-- Statistical significance and practical significance --> 
-<!-- Other stat tests --> 
+Some additional variables that proved to be a good predictor of revenue are Director Score, Actor Score and Native English Film, Belongs to Collection as well as Runtime with a caveat that runtime is not practically significant with a very low coefficients which means that there will be insignificant increase to revenue with every additional minute of runtime. On the other hand we want to pay attention to variables that are statistically significant and have a high practical significance, such as belonging to a collection of movies, having a higher budget.
+
+Our suggested final model will be model 4 that will have practically and statistically significant variables.
+
 ## Limitations
 ### Statistical limitations
 <!-- Evaluate problematic large model assumptions --> 
+
+We will evaluate this model against 2 large model assumptions since we have a sample of well above 100. The first is IID and presence perfectly coliniear variables. 
+
+1. For the IID assumption we want to make sure that our samples are Independent and Identically Distributed. It is hard to find a sample that is perfectly independent. Our data source is coming from The Movie Database (TMDB) which is a community built movie and TV database including international movies. It's one of the largest community managed database of movies, which should provide a good collection of movies including international releases. And we used a sample of approximately 2000 randomly selected movies that were compiled for a Kaggle competition. The randomized sample should help with the assumption of indepedence.
+
+Although multiple factors could cause the movies to be dependent on each other. For example presence of the same crew and cast can produce movie samples that may not be independent. Movies that are produced as part of the sequel do dependent on the revenue and success of the previous releases. There could be multiple other scenarios that can influence other movies in the sample, and we're seeing some pattern in the Residuals vs. Fitted plot below also may indicate error terms not to follow a constant variance, but given random sample that is drawn from a large database we will consider this to be IID.
+
+```{r}
+modf_2 <- fortify(model_4)
+ggplot(modf_2, aes(x = .fitted, y = .resid)) + geom_point() + geom_smooth() + labs(
+  title = "Residuals over Fitted",
+  x = "Fitted",
+  y = "Residuals")
+```
+
+
+2. The second model assumption is that there is no perfect colliniarity between variables which is proven by the fact that none of the variables were dropped from the model when we were fitting the model. In the presence of multicolliniariry the `lm` function in R would drop a variable and not display a coeffcient value or significance.
+
+We are meeting the 2 large model assumptions that are necessary to prove the model is reflecting a true information about the world and that we are reporting a results and coming to a conclusion that will be useful in the industry.
+
 ### Structural limitations
-<!-- Omitted variables --> 
+
+Although we've considered a multititude of variables in our model there are some limitations, our actor and director scores are measured only for top 100 actors, actresses and directors at a time when in a movie industry and through social media the popularity of a cast and crew could evolve.
+
+We're also not controlling for inflation when comparing movie revenues throughout the years. A revenue 10 or 20 years ago will be higher if we account for inflation and compare it to movies that were released more recently.
+
+Some of the structural limitations of the model are omitted variables. If there is presence of another significant predictor that we don't measure or include in the model that influences the revenue. We suppose some of those variables are quality and promotion budget or strategy. It's harder to measure the true quality of a movie and in our model we use more of a proxy for quality through evaluating actor and director score as well as budget, which may not capture the whole measurement of quality. Another omitted variable is marketing budget since we only have the production budget in our dataset. Promotional strategy and budget could be a significant influence on revenue, since more popular movies have more box office revenues.
+
 ## Conclusion and Discussion 
 
 <!-- Key insights --> 
+- significant variables and their contribution to answering the question
