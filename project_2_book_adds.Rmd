@@ -544,7 +544,7 @@ source('./src/get_robust_se.R')
 #Model for Pure Revenue 
 model_1 <- lm(log(revenue) ~ log(budget), data=final_table)
 
-#Model for Pure Revenue 
+#Model for Pure Revenue and Genre
 model_2 <- lm(log(revenue) ~ log(budget) + comedy + drama + family + romance + thriller + animation + adventure + horror + music + crime + sci_fi + action + war + western + fantasy + foreign + mystery + history + documentary, data=final_table)
 
 #Model for Pure Revenue and all other variables
@@ -619,7 +619,7 @@ Our suggested final model will be model 4 that will have practically and statist
 
 We will evaluate this model against 2 large model assumptions since we have a sample of well above 100. The first is IID and presence perfectly coliniear variables. 
 
-1. For the IID assumption we want to make sure that our samples are Independent and Identically Distributed. It is hard to find a sample that is perfectly independent. Our data source is coming from The Movie Database (TMDB) which is a community built movie and TV database including international movies. It's one of the largest community managed database of movies, which should provide a good collection of movies including international releases. And we used a sample of approximately 2000 randomly selected movies that were compiled for a Kaggle competition. The randomized sample should help with the assumption of independence. And there are no signs to believe that the underlying distribution for samples in non-identical.
+1. In order to satisfy the large model assumption of IID, the samples used in our model must be Independent and Identically Distributed. It is difficult to guarantee that a sample is perfectly independent. Our data source originates from The Movie Database (TMDB), which is a community-built movie and TV database that includes international movies. It is one of the largest community-managed databases of movies, and provides a robust collection of movies from a range of countries. Out of this database, a sample of approximately 2000 randomly selected movies that were compiled for a Kaggle competition were used. Hence, here were no signs based on the method of data selection to suggest that the underlying distribution for samples was non-identical.
 
 Although multiple factors could cause the movies to be dependent on each other. For example movies that are produced as part of the sequel do dependent on the revenue and success of the previous releases. There could be multiple other scenarios that can influence other movies in the sample, and we're seeing some pattern in the Residuals vs. Fitted plot below which also may indicate error terms not to follow a constant variance, but given random sample that is drawn from a large database we will consider this to satisfy the IID assumption.
 
@@ -635,66 +635,61 @@ ggplot(modf_2, aes(x = .fitted, y = .resid)) + geom_point() + geom_smooth(
 ```
 
 
-2. The second model assumption is that there is no perfect colliniarity between variables which is proven by the fact that none of the variables were dropped from the model when we were fitting the model. In the presence of multicolliniariry the `lm` function in R would drop a variable and not display a coefficient value or significance.
+2. The second model assumption is that there is no perfect collinearity between variables - this is suggested by the fact that none of the variables were dropped from the model when we were fitting the model. In the presence of multicollinearity, the `lm` function in R would drop a variable and not display the corresponding coefficient value or significance.
 
-We are meeting the 2 large model assumptions that are necessary to prove the model is reflecting a true information about the world and that we are reporting a results and coming to a conclusion that will be useful in the industry.
+Thus, we have met the 2 large model assumptions that are necessary to support our model, and this in turn suggests that our model is reasonable for use in drawing conclusions.
 
-### Structural limitations
+### Structural Limitations
 
-Although we've considered a multititude of variables in our model there are some limitations, our actor and director scores are measured only for top 100 actors, actresses and directors at a time when in a movie industry and through social media the popularity of a cast and crew could evolve.
+Although we've considered a multitude of variables in our model there are some limitations. For example, our actor and director scores are measured only for the all-time top 100 actors/actresses and top 50 directors as rated by an internet audience. Individuals who are only somewhat famous, are controversial, or were only popular recently may not be accurated accounted for in the data. Moreover, our results do not purport to establish an explicit cause-and-effect relationship between any features and their outcomes, as more research and analysis into the likely causal model of ticket sales would need to be performed and accounted for. While regression can be used to create predictive models, it cannot always claim to explain the reasons behind certain results.
 
 ### Omitted Variables
 
-Some of the structural limitations of the model are omitted variables. If there is presence of another significant predictor that we don't measure or include in the model that influences the revenue. We suppose some of those variables are quality and promotion budget or strategy. It's harder to measure the true quality of a movie and in our model we use more of a proxy for quality through evaluating actor and director score as well as budget, which may not capture the whole measurement of quality. Another omitted variable is marketing budget since we only have the production budget in our dataset. Promotional strategy and budget could be a significant influence on revenue, since more popular movies have more box office revenues.
-
-While we have covered a lot of possible variables for our model, it's almost certain that there are more variables that could explain a movie's financial success. Here we will cover the ones we consider to be the main omitted variables.
+One structural limitations of any model are omitted variables. If there is the presence of another significant predictor that isn't measured or included in the model, this may serve to ultimately bias the results. Two of those variables that will be discussed are 1) Quality and 2) Promotional Budget or Strategy. While we will dive in-depth on these possible omitted variables of our model, it's almost certain that there are even more factors that could explain a movie's financial success or lack thereof.
 
 #### The Quality of the Movie
 
-So far we have discussed more objective measurements, such as the budget, release date, cast and crew. However, these are not the only factors that can affect a movie's success.
+So far we have discussed mostly tangible variables, such as budget, release date, cast and crew. However, we expect that these are not the only factors that can affect a movie's success.
 
 Word of mouth has been studied as an important factor in a movie's success ^[Liu, Yong. “Word of Mouth for Movies: Its Dynamics and Impact on Box Office Revenue.” Journal of Marketing, vol. 70, no. 3, American Marketing Association, 2006, pp. 74–89, http://www.jstor.org/stable/30162102.].
 
 Average movies tend not to create a lot of word of mouth, so they are unlikely to benefit from that effect, while excellent movies will get talked about and recommended.
 
-We do run into a problem when trying to include it in our model. While we could use rankings and ratings as proxy variables, this research focuses on predicting a movie's revenue, and these kinds of rankings and ratings tend to come out after a movie is released, making including them on the research pointless.
+We do run into a problem when trying to include it in our model. While we could use rankings and ratings as proxy variables, this research focuses on predicting a movie's revenue, and these kinds of rankings and ratings tend to come out after a movie is released, making including them in this particular model pointless.
 
-We have decided that the best way to capture the effect of the quality of a movie would be through the Director Score variable. A movie by a great director is probably the safest bet someone can make when it comes to the movie's quality.
+We have decided that the best way to capture the effect of the quality of a movie would be through the Director Score variable. A movie by a great director, we hypothesize, is likely the safest bet someone can make when it comes to the movie's quality.
 
-We would also expect some of its effect to be captured by the Actors score, and its budget, both are things are associated with a movie's quality.
+We would also expect some of the Quality effect to be captured by the Actors score (as we would expect famous actors to have high-quality acting skills) and budget (as we would expect films with more resources to be of higher quality.
 
-Since the relationship is positive, and we assume that so is the Actor's score and the budget, then it would be safe to assume that omitting this variable is pushing these coefficients away from zero, thus overestimating their effect on a movie.
+Since we speculate that the relationship between movie quality and revenue is positive, and likewise with the Actor's score and budget, then omitting this variable may be pushing these coefficients away from zero, thus overestimating their effect on a movie's financial performance.
 
-#### The Marketing strategy and budget
+#### The Marketing Strategy and Budget
 
-Another possible omitted variable is the movie's marketing. If nobody hears about a movie, they are much less likely to go see it. A good marketing strategy can get people to the movie theatres, and it can also maximize the effect of an actor's appeal, as was the case with the Zendaya example.
+Another possible omitted variable is the movie's marketing. If no one hears about a movie, they are much less likely to go see it. A good marketing strategy can bring people to movie theaters and can also maximize the effect of an actor's appeal, as was the case with the previously cited Zendaya example.
 
-Quantifying a "good" marketing strategy is complicated, but we could use the movie's marketing budget as a proxy variable. However, the marketing budget is not part of our dataset's budget column, as the marketing and distribution budget are not usually part of the movie's reported budget, which tends to focus on just production costs.
+Quantifying a "good" marketing strategy is complicated, but we could use the movie's marketing budget as a proxy variable. However, the marketing budget is not given as part of our dataset, as a movie's reported budget often tends to focus on just production costs.
 
 Having said that, it's very likely that a marketing budget will be heavily correlated with a movie's production budget. So by including the budget, we are including a proxy variable for a movie's marketing strategy.
 
-Just like with the quality, we would expect a good marketing strategy to have a positive effect on the revenue, as well as a positive effect on related variables such as the Actors Score.
+Just like with Quality, we would expect a good marketing strategy to have a positive effect on the revenue, as well as a positive effect on related variables such as the Actors Score, and thus a similar omitted variable bias.
 
 ## Conclusion and Discussion 
 
-Considering the limitations of our study, we found reasonable results in trying to answer whether we can build a predictive model to measure movie box office success. We used one of the largest movie databases and selected a random sample. We focused on the variables that could be obtained before movie production and release to justify using such a model in the movie consideration process. We identified a relationship between movie budget and revenue and were able to find additional significant covariates. Finally, we considered the limitations of the covariates and the model and have tested some of the underlying large sample model assumptions.
+Considering the limitations of our study, we created a usable initial predictive model for measuring movie box office success. Using a large movie database that drew from a random sample, we focused on the variables that could be obtained before movie production and release to simulate real-world use of the model for stakeholders. We identified a significant relationship between movie revenue and multiple component features.
 
-To conclude our findings and provide more insight into the movie industry. Although we established a clear relationship between movie budget and revenue, it may not be the only variable to produce a blockbuster. We're finding that movies that are part of a sequel tend to perform well, which may also be explained by the fact that films in a sequel have proven to be popular and were given a budget for more movies to be produced.
+The first, and perhaps most obvious relationship, was found between movie budget and movie revenue. As overall spending for a film increases, the expected revenue of a film follows as well. The data also suggests that movies that are part of a sequence (i.e. not standalone releases) tend to perform well - this may also be potentially explained by the fact that films in a sequel have proven to be successful already and were provided a budget for more movies to be produced.
 
-We confirmed the seasonality of movie releases when certain months perform better than others. Summer proved to be a good movie season, with July producing more considerable revenues than other months in a year, as well as December being a good month to release movies. However, as mentioned in the Data section, there may be some self-selection element with seasonality, with production companies choosing to release high budget movies during those months. 
+Moreover, seasonality of movie release appeared to be a factor in success - certain release months performed, in the aggregate, better than others. Summer proved to be a good movie season, with July producing more considerable revenues than other months in a year; the holiday season of December was also strong. Correlation does not necessarily equate to causation, however, as there may be some self-selection element with seasonality, with production companies choosing to release high budget movies during those months. 
 
-We also see that native English films tend to do better while foreign films may decrease future profitability.
+It was also observed that native English films tended to do better whilst compared to foreign films. Movie genre might additionally be a useful predictor for movie industry decision-makers, as the horror or adventure genre often produced a stronger return on investment than others.
 
-We hypothesized that movie genre might be a good predictor and guiding factor for movie industry decision-makers. When considering movies in the horror or adventure genre, it could be a safer bet for return on investment.
+Lastly, the derived actor and director scores for popularity of the cast and crew have proven to be significant, with more popular actors and directors correlating with higher revenue.
 
-And finally, the actor score and director scores for measures of popularity of the cast and crew have proved to be significant, with more popular actors bringing more revenue and followed by famous directors.
+If we were to continue with this research, we consider that it would be interesting to separate our dataset into time periods, as movie audiences can vary a lot throughout the years, and as mentioned before, our dataset goes back almost 100 years. In particular, a study that focuses just on the last 20 years may be more practically significant than one that uses data from all of movie history. This would require a method to categorize actors and directors from just this time period, and include that variable in our analysis. Another interesting topic to consider would be to run a regression focusing just on Opening Weekend Box Office and see how different features may compare between the two dependent variables.
 
-If we were to continue with this research, we consider that it would be interesting to separate our dataset into time periods, as movie audiences can vary a lot throughout the years, and as mentioned before, our dataset goes back almost 100 years. In particular, perhaps a research that focuses just on the last 20 years may be more practically significant than one that uses data from all of movie history. We would also need to come up with a way to categorize actors and directors from just this time period in include that variable in our analysis.
+We have considered the limitations of the covariates and the model and have tested some of the underlying large sample model assumptions. One limitation of our research was the omitted variable of "Quality", which is often indiscernible before the official release date of a film. While we used other variables as proxies that we hoped would capture the effect of quality, by running a future regression with Opening Weekend Box Office as the dependent variable, we surmise that the effect of movie "Quality" may be blunted somewhat. Working off of a causal model where high quality results in a larger positive feedback loop of word-of-mouth referrals, measuring solely Opening Weekend Box Office sales may help us isolate the other significant features in our future studies.
 
-Another interesting point to consider would be focusing just on Opening Weekend Box Office. One limitation of our research was the omitted variable of "Quality". While we used other variables as proxys that we hoped would capture the effect of quality, it's still not the perfect solution.
-
-However, if we were to use Opening Weekend Box Office as the dependent variable, instead of total Box Office revenue, then the "Quality" effect would likely be not as meaningful. We assume this would be the case since there wouldn't be enough time for word of mouth to get out and attract more movie goers.
-
+Overall, our results serve as a starting point for predictive modeling of movie-related success, and future research can be conducted to help pinpoint cause-and-effect relationships and provide even more actionable insights for film studios.
 
 
 
