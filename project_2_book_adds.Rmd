@@ -604,7 +604,10 @@ Although multiple factors could cause the movies to be dependent on each other. 
 
 ```{r echo=FALSE, warning=FALSE}
 modf_2 <- fortify(model_4)
-ggplot(modf_2, aes(x = .fitted, y = .resid)) + geom_point() + geom_smooth() + labs(
+ggplot(modf_2, aes(x = .fitted, y = .resid)) + geom_point() + geom_smooth(
+  method = 'gam',
+   formula = y ~ s(x, bs = "cs")
+) + labs(
   title = "Residuals over Fitted",
   x = "Fitted",
   y = "Residuals")
@@ -664,8 +667,6 @@ We also see that native English films tend to do better while foreign films may 
 We hypothesized that movie genre might be a good predictor and guiding factor for movie industry decision-makers. When considering movies in the horror or adventure genre, it could be a safer bet for return on investment.
 
 And finally, the actor score and director scores for measures of popularity of the cast and crew have proved to be significant, with more popular actors bringing more revenue and followed by famous directors.
-
-## The future
 
 If we were to continue with this research, we consider that it would be interesting to separate our dataset into time periods, as movie audiences can vary a lot throughout the years, and as mentioned before, our dataset goes back almost 100 years. In particular, perhaps a research that focuses just on the last 20 years may be more practically significant than one that uses data from all of movie history. We would also need to come up with a way to categorize actors and directors from just this time period in include that variable in our analysis.
 
