@@ -17,6 +17,7 @@ library(jsonlite)
 library(sandwich)
 library(stargazer)
 library(gridExtra)
+library(stringr)
 ```
 
 ## Introduction
@@ -59,6 +60,8 @@ After completing this process we still had over 2000 entries.
 ```{r, include=FALSE}
 d <- read.csv('./src/data/Clean_Data_set.csv')
 
+inflation_df <- read.csv('./src/data/CPIAUCNS.csv')
+
 actors_df <- read.csv('./src/data/Greatest Actors List.csv')
 
 directors_df <- read.csv('./src/data/Greatest Directors List.csv')
@@ -77,7 +80,6 @@ actors_df<- actors_df[(actors_df$Name != ''),]
 names(directors_df)[names(directors_df) == 'Name'] <- 'director_name'
 names(directors_df)[names(directors_df) == 'Score'] <- 'director_score'
 names(short_data)[names(short_data) == 'directors'] <- 'director_name'
-
 
 #drop unnecessary director columns
 excluded_variables <- names(directors_df) %in% c("Rank", "Count", "M.or.F")
@@ -119,6 +121,44 @@ clean_data$actor_score <- apply(clean_data, 1, FUN = count_top_actors)
 merged_data <- merge(clean_data, directors_df, by = "director_name", all.x = TRUE)
 
 merged_data$director_score[is.na(merged_data$director_score)] <- 0
+```
+
+```{r add month of release and format date, include=FALSE}
+get_month <- function(list) {
+  date <- list[8]
+  month <- str_extract(date, "[^/]+")
+  return (as.numeric(month))
+}
+
+merged_data$month_of_release <- apply(merged_data, 1, FUN = get_month)
+```
+
+```{r adjust by inflation, include=FALSE}
+
+merged_data$formatted_release_date <- as.Date(merged_data$release_date,
+  format = "%m/%d/%y")
+
+merged_data <- merged_data %>% 
+  mutate(formatted_release_date = str_replace(formatted_release_date, "[^-]+$", "01"))
+
+merged_data <- merge(merged_data, inflation_df, by.x = "formatted_release_date", by.y= "DATE", all.x = TRUE)
+
+merged_data <- merged_data %>% 
+  mutate(
+    comedy = case_when(
+      #encode comedy, and all subsequent genres as binary
+      regexpr('Comedy', genres) >= 0 ~ 1, 
+      regexpr('Comedy', genres) == -1 ~ 0)
+  )
+
+merged_data <- merged_data %>% 
+  mutate(
+    budget = budget * 100 / CPIAUCNS,
+    revenue = revenue * 100 / CPIAUCNS,
+  )
+
+
+merged_data<-final_table[is.na(final_table$CPIAUCNS),]
 ```
 
 ```{r, include=FALSE}
@@ -208,7 +248,6 @@ final_table <- merged_data %>%
     
     
      february = case_when(
-      
       substr(release_date, start = 1, stop = 2) == '2/' ~ 1, 
       substr(release_date, start = 1, stop = 2) != '2/' ~ 0),
     
@@ -272,6 +311,8 @@ final_table <- merged_data %>%
     
     
   )
+
+
 ```
 
 ### Research Question
@@ -320,6 +361,18 @@ This self-selection on the supply side is likely to have an effect on the demand
 
 Our model will control for this effect by adding the month of release to the model. We would expect the summer months, as well as December to have a significant positive effect on revenue.
 
+If we just look at the distribution, we'll notice that more movies come out in the fall, however if we instead look at the average revenue per month, we see a peak during the summer, and a smaller peak towards the end of the year.
+
+```{r echo=FALSE}
+
+p1 <- ggplot(final_table, aes(x=factor(month_of_release))) + geom_bar() + ggtitle("Distribution of Month of Release Date") + xlab("Month") + ylab("Count")
+
+p2 <- ggplot(final_table, aes(x=factor(month_of_release), y=revenue/1000000)) +  
+       stat_summary(fun.y = mean, geom="bar", size = 1)  + ggtitle("Average Revenue (MM USD) by Month of Release Date") + xlab("Month") + ylab("Revenue")
+
+grid.arrange(p1, p2, nrow = 2)
+```
+
 #### The Cast and Director's Name Recognition
 
 It shouldn't be a surprise to anyone that famous actors attract crowds, which in turn increase the movie's box office performance. Audiences want to see their favorite actors in their movies, for a variety of reasons.
@@ -337,6 +390,20 @@ We have also added a "Director Score" which will reflect a movie's director rank
 - Top 50 - 1 point
 - Not on the ranking - 0 points
 
+Our initial exploratory data analysis showed us that the vast majority of movies in our dataset were not made by a "Top Director", however, once we look at the average revenue by director score we notice an interesting shape.
+
+The "best" directors actually have a below average revenue, but the "mid-tier" directors do seem to have above average revenue for their movies.
+
+```{r echo=FALSE}
+
+p1 <- ggplot(final_table, aes(x=factor(director_score))) + geom_bar() + ggtitle("Distribution of Director Score") + xlab("Month") + ylab("Count")
+
+p2 <- ggplot(final_table, aes(x=factor(director_score), y=revenue/1000000)) +  
+       stat_summary(fun.y = mean, geom="bar", size = 1)  + ggtitle("Average Revenue (MM USD) vs Director Score") + xlab("Director Score") + ylab("Revenue")
+
+grid.arrange(p1, p2, nrow = 2)
+```
+
 #### Genre
 
 There are a lot of different movie genres, and a movie can be considered to have multiple of those. We do not have very specific expectations regarding which genres may have a significant effect on revenue.
@@ -345,6 +412,27 @@ There are a lot of different movie genres, and a movie can be considered to have
 
 There have always been movies that have been part of something bigger. Successful movies tend to spawn sequels, or even entire series. Just being associated with something greater may help a movie do better in the box office.
 
+An initial EDA shows that movies that belong to a collection have a significantly higher average revenue.
+
+```{r echo=FALSE}
+
+ggplot(final_table, aes(x=belongs_to_collection, y=revenue/1000000)) +  
+       stat_summary(fun.y = mean, geom="bar", size = 1)  + ggtitle("Average Revenue (MM USD) vs Being part of a Franchise") + xlab("Part of a collection?") + ylab("Revenue")
+```
+
+#### Where is the movie from?
+
+The global box office is not evenly distributed. While this has changed over the years, the american audience still makes up the biggest chunk of the global box office.
+
+Because of this we decided to add a dummy variable that uses a movie's original language. If the movie's original language is in English, then it will have a value of 1, and if it isn't, then 0.
+
+Our initial EDA shows us that there is indeed a clear difference between movies with english as their original language and those that have another language.
+
+```{r echo=FALSE}
+
+ggplot(final_table, aes(x=native_english_film, y=revenue/1000000)) +  
+       stat_summary(fun.y = mean, geom="bar", size = 1)  + ggtitle("Average Revenue (MM USD) vs Is the movie in English?") + xlab("Is the movie in English?") + ylab("Revenue")
+```
 
 ```{r echo=FALSE}
 
@@ -354,10 +442,7 @@ p1 <- ggplot(final_table, aes(x=log(profitability_ratio))) + geom_histogram(bins
 p2 <- ggplot(final_table, aes(x=runtime)) + geom_histogram(bins = 100) + ggtitle("Distribution of Film Runtime") + xlab("Runtime (min)") + ylab("Count")
 #runtime appears to be relatively normally distributed overall, except for the narrow group on the lower end of time
 
-p3 <- ggplot(final_table, aes(x=substr(release_date, start = 1, stop = 2))) + geom_bar() + ggtitle("Distribution of Month of Release Date") + xlab("Month") + ylab("Count")
-#Release date overall looks fairly well distributed over time - the number indicates month, with 1/ - 9/ representing  January to September, and 10 - 12 representing October - December
-
-grid.arrange(p1, p2, p3, nrow = 2)
+grid.arrange(p1, p2, nrow = 2)
 ```
 
 ```{r echo=FALSE}
