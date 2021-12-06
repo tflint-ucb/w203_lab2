@@ -86,13 +86,15 @@ directors_df <- directors_df[!excluded_variables]
 
 
 ```{r clean data, include=FALSE}
-
-# Remove entries without budget or genre or cast
+# Remove entries without budget revenue or genre or actors
 clean_data<-short_data[(short_data$budget > 0),]
 clean_data<-clean_data[(clean_data$actors != "[]"),]
+clean_data<-clean_data[!(is.na(clean_data$revenue)),]
+
 # Convert belongs_to_collection to a True or False variable
 clean_data$belongs_to_collection[clean_data$belongs_to_collection != ""] <- TRUE
 clean_data$belongs_to_collection[clean_data$belongs_to_collection == ""] <- FALSE
+
 
 ```
 
@@ -312,7 +314,7 @@ As seen in the previous charts, there is a clear positive relationship between b
 
 #### Seasonality
 
-Just like for a lot of other industries, we expect for there to be a seasonal effect on a movie's box office success. We theorize that the effect of seasonality in the movie industry comes from both the demand and the supply.
+Just like for a lot of other industries, seasonality in the movie industry is a well documented phenomena. ^[Einav, L. (2007). Seasonality in the U.S. Motion Picture Industry. The RAND Journal of Economics, 38(1), 127–145. http://www.jstor.org/stable/25046296]
 
 Certain times of the year tend to attract more moviegoers, such as the summer, the holiday season and certain weekends that coincide with important holidays (Christmas, 4th of July weekend, Memorial Day weekend, among others). This increase demand would lead to a better box office performance.
 
@@ -320,7 +322,64 @@ On the other hand, supply is also affected by seasonality. Big budget movies are
 
 This self-selection on the supply side is likely to have an effect on the demand as well, as a greater number of quality movies during certain times would attract more movie goers.
 
-Our model will control for this effect by adding the month of release to the model.
+Our model will control for this effect by adding the month of release to the model. We would expect the summer months, as well as December to have a significant positive effect on revenue.
+
+#### The Cast and Director's Name Recognition
+
+It shouldn't be a surprise to anyone that famous actors attract crowds, which in turn increase the movie's box office performance. Audiences want to see their favorite actors in their movies, for a variety of reasons.
+
+A recent example that comes to mind is the 2021 movie adaptation of Dune. The actress Zendaya was a big part of the movie's marketing, despite the fact that sheonly briefly appears in the movie. A lot of movie goers were upset after seeing the movie because they expected her to have a bigger role.^[https://nypost.com/2021/10/26/fans-outraged-that-zendaya-is-in-dune-for-only-7-minutes/].
+
+For our model we will give each movie an "Actor Score" which will be just a counter of how many well known actors are part of their cast.
+
+We have also added a "Director Score" which will reflect a movie's director ranking in the following manner:
+
+Top 10 - 5 points
+Top 20 - 4 points
+Top 30 - 3 points
+Top 40 - 2 points
+Top 50 - 1 point
+Not on the ranking - 0 points
+
+#### Genre
+
+There are a lot of different movie genres, and a movie can be considered to have multiple of those. We do not have very specific expectations regarding which genres may have a significant effect on revenue.
+
+#### Is it part of a franchise/collection?
+
+There have always been movies that have been part of something bigger. Successful movies tend to spawn sequels, or even entire series. Just being associated with something greater may help a movie do better in the box office.
+
+### Omitted Variables
+
+While we have covered a lot of possible variables for our model, it's almost certain that there are more variables that could explain a movie's financial success. Here we will cover the ones we consider to be the main omitted variables.
+
+#### The Quality of the Movie
+
+So far we have discussed more objective measurements, such as the budget, release date, cast and crew. However, these are not the only factors that can affect a movie's success.
+
+Word of mouth has been studied as an important factor in a movie's success ^[Liu, Yong. “Word of Mouth for Movies: Its Dynamics and Impact on Box Office Revenue.” Journal of Marketing, vol. 70, no. 3, American Marketing Association, 2006, pp. 74–89, http://www.jstor.org/stable/30162102.].
+
+Average movies tend not to create a lot of word of mouth, so they are unlikely to benefit from that effect, while excellent movies will get talked about and recommended.
+
+We do run into a problem when trying to include it in our model. While we could use rankings and ratings as proxy variables, this research focuses on predicting a movie's revenue, and these kinds of rankings and ratings tend to come out after a movie is released, making including them on the research pointless.
+
+We have decided that the best way to capture the effect of the quality of a movie would be through the Director Score variable. A movie by a great director is probably the safest bet someone can make when it comes to the movie's quality.
+
+We would also expect some of its effect to be captured by the Actors score, and its budget, both are things are associated with a movie's quality.
+
+Since the relationship is positive, and we assume that so is the Actor's score and the budget, then it would be safe to assume that omitting this variable is pushing these coefficients away from zero, thus overestimating their effect on a movie.
+
+#### The Marketing strategy and budget
+
+Another possible omitted variable is the movie's marketing. If nobody hears about a movie, they are much less likely to go see it. A good marketing strategy can get people to the movie theatres, and it can also maximize the effect of an actor's appeal, as was the case with the Zendaya example.
+
+Quantifying a "good" marketing strategy is complicated, but we could use the movie's marketing budget as a proxy variable. However, the marketing budget is not part of our dataset's budget column, as the marketing and distribution budget are not usually part of the movie's reported budget, which tends to focus on just production costs.
+
+Having said that, it's very likely that a marketing budget will be heavily correlated with a movie's production budget. So by including the budget, we are including a proxy variable for a movie's marketing strategy.
+
+Just like with the quality, we would expect a good marketing strategy to have a positive effect on the revenue, as well as a positive effect on related variables such as the Actors Score.
+
+### Research Design
 
 
 ## Statistical Model
