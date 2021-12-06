@@ -1,5 +1,5 @@
 ---
-title: "Lab 2: What Makes a Movie Successful? Fall 2021"
+title: 'Lab 2: What Makes a Movie Successful? Fall 2021'
 author: 'w203: Statistics for Data Science'
 date: "November 1, 2021"
 output: html_document
@@ -337,6 +337,15 @@ On the other hand, supply is also affected by seasonality. Big budget movies are
 This self-selection on the supply side is likely to have an effect on the demand as well, as a greater number of quality movies during certain times would attract more movie goers.
 
 Our model will control for this effect by adding the month of release to the model.
+
+#### The Cast's Name Recognition
+
+It shouldn't be a surprise to anyone that famous actors attract crowds, which in turn increase the movie's box office performance. Audiences want to see their favorite actors in their movies, for a variety of reasons.
+
+A recent example that comes to mind is the 2021 movie adaptation of Dune. The actress Zendaya was a big part of the movie's marketing, despite the fact that she was only briefly appears in the movie. A lot of movie goers were upset after seeing the movie since they expected her to have a bigger role.
+
+For our model we will give each movie an "Actor Score" which is just a count of how many well known actors are part of their cast.
+
 
 ### Research design
 
