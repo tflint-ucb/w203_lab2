@@ -24,37 +24,35 @@ library(knitr)
 
 ## Introduction
 
-What makes a movie “one of the greats”? While that question may elude both data analysts and artists for years to come, we are looking to  find some effective indicators of box office success for films, in the hopes of maintaining a thriving movie industry for years to come. This project will focus on several commonly cited reasons for movie fiscal success and analyze how much of an impact each factor has. 
+What makes a movie “one of the greats”? While that question may elude both data analysts and artists for years to come, our analysis seeks to find some effective indicators of box office success for films, in the hopes of maintaining a thriving movie industry for years to come. This project will focus on several commonly cited reasons for movie fiscal success and analyze how much of an impact each factor has. 
 
-The client for this analysis could be any major movie studio or its parent company, e.g. NBCUniversal or Walt Disney Studios. This is a significant issue, because box office sales decreased by 60% in 2020 during COVID-19 pandemic, leaving the movie theaters empty for months. This analysis will provide clues for what a studio can do to speed up the recovery and account for lost revenue.
+The client for this analysis could be any major movie studio or its parent company, e.g. NBCUniversal or Walt Disney Studios. This is a timely issue, as box office sales decreased by 60% in 2020 during COVID-19 pandemic, which left movie theaters empty for months. This analysis will provide clues for what a studio can do to speed up their recovery and account for lost revenue.
 
-The main dataset we’ll use for this analysis comes from The Movie Database (TMDB - https://www.themoviedb.org/), as well as several assembled lists from online polls (e.g. “Greatest Actors/Actresses of All Time” - Ranker.com).
+The main dataset that will be used for this analysis comes from The Movie Database (TMDB - https://www.themoviedb.org/), as well as several assembled lists from online polls (e.g. “Greatest Actors/Actresses of All Time” - Ranker.com).
 
-We’re planning on using profitability as the response variable for analysis in this study - using R to clean the empty and irrelevant cells, a “profitability ratio” can be determined for each movie based on its box office sales divided by budget (and controlling for foreign films and currencies).
+We’re planning on using gross revenue as the response variable for analysis in this study - using R to clean the empty and irrelevant cells, a measurable revenue can be determined for each movie based on its box office sales and controlling for foreign films/currencies and inflation, based on time of release.
 
-In order to build our models, we decided to focus on some factors that are usually linked to a movie's financial success, such as budget, time of release, its cast's popularity and director's name brand recognition. We will also take into account some control variables such as runtime and genre.
-
+In order to build our models, we will focus on typical anecdotal factors linked to a movie's financial success, such as budget, date of release, its cast's popularity, and its director's name brand recognition. We will also take into account control variables such as runtime and genre.
 
 The products of this analysis will include the code and final datasets, as well as a written summary of the significant results. 
-
 
 ## Data, Research Question, Underlying Model and Study Design
 
 ### Data
 As mentioned before our main dataset comes from data extracted from The Movie Database (TMDB - https://www.themoviedb.org/). This dataset was compiled by Kaggle for a Machine Learning competition a few years ago.
 
-The original dataset consists of 22 variables for over 7000 films, from the 1920s to 2017. This dataset consists of objective data for each of these movies such as budget, revenue, cast, crew, release date, production company, original language among others.
+The original dataset consists of 22 variables for over 7000 films, from the 1920s to 2017. This dataset consists of objective data for each of these movies, including budget, revenue, cast, crew, release date, production company, original language among others.
 
-We also added two more datasets consisting of two lists with a ranking of the "Top 100 movie actors of all time", as well as the top "Top 50 directors". Unlike the previous dataset, these ranks is subjective, but we plan on using these lists to help us create a variable that could stand in for an actor's or director's popularity.
+We also joined two additional datasets consisting of two lists with a ranking of the "Top 100 movie actors of all time", as well as the top "Top 50 directors". Unlike the previous dataset, these ranks are subjective, but based on large numbers of votes (>100k). We plan on using these lists to help us create a variable that could numerically approximate an actor's or director's popularity. We also joined in an cost-adjustment price index to inflation-adjust our values.
 
 We performed some data cleaning operations on the main dataset in order to have it be ready for our analysis. These included:
 
-- Eliminating any entries that had some vital information missing (such as revenue, budget, cast, crew and genres)
-- Parsing certain fields from a stringified JSON.
+- Eliminating  entries that had vital information/fields missing (such as revenue, budget, cast, crew and genres)
+- Parsing certain fields from a string-like JSON
 - Creating the "Actors" column from the "Cast" column
-- Extracting the Director from the "Crew" column
+- Extracting the "Director" from the "Crew" column
 
-After completing this process we still had over 2000 entries.
+After completing this process, there remained over 2000 entries.
 
 
 ```{r, include=FALSE}
@@ -576,11 +574,11 @@ stargazer(
 ```
 
 
-All models are overall significant when looking at F-statistic which means that our linear regression model provides a better fit to the data than a model that contains no independent variables. As we're adding more predictors into the model we want to also evaluate the Adjusted R2 since that metric will account for predictors that improve the overall model more than expected by chance. Across the model we're seeing an increase in Adjusted R2 from most simple model to the most complex, which means that independent variables are capturing the variation in the dependent variable quite well and the addition of covariates is improving the model.
+All models are overall significant when looking at F-statistic, which means that our linear regression model provides a better fit to the data than a model that contains no independent variables. As we're adding more predictors into the model, we will also evaluate the Adjusted R-squared since that metric will account for predictors that improve the overall model more than expected by chance. Across the modelm there is an observable increase in Adjusted R-squared from the most simple model to the most complex, which indicates that independent variables are capturing the variation in the dependent variable well and the addition of covariates is improving the model.
 
-We found that quite a few variables in our consideration proved to be statistically significant. Budget, our main variable in question in the first model is significant because the p-value is below 0.05 threshold and is showing practical significance with a high coefficient. Since both variables were transformed using natural logarithms we can conveniently interpret the results in percents. For every percent increase in budget will have 0.81% increase in revenue. Since this could mean that for every additional dollar in the budget the return will be 80 cents. Which is why we want to interpret additional variables to understand what is the differentiating factor between profitable and not profitable movies.
+We found that quite a few variables in our consideration proved to be statistically significant. Budget, our main variable in question in the first model, is significant because the p-value is below 0.05 threshold and is showing practical significance with a high coefficient. Since both variables were transformed using natural logarithms we can interpret the results in percentages. For every percent increase in budget, there is a correlational 0.81% increase in revenue. This could potentially mean that every additional dollar in the budget is associated with a return of 80 cents. Thus, additional variables should be analyzed to understand what are the differentiating factors between profitable and not profitable movies, as a return of 80 cents per dollar would strictly be unprofitable otherwise.
 
-In the second model when we include genre we have to interpret the statistical significance differently to avoid getting a significant genre by chance since we're evaluating a large number of genres. To make the significance stricter we will multiply the p-value for genre by 19, since we have 19 coefficients for genre. We conclude that drama may only be significant by chance because we ran multiple t-tests. And we can say that other variables, adventure, horror and foreign genres are significant predictors of revenue.
+In the second model, when movie genre is included, statistical significance must be tabulated differently to avoid falsely perceiving a "significant" genre by chance since a large number of genres is being tabulated. To make the significance more strict, we will multiply the p-value for genre by 19, since we have 19 "slices" of genre. We conclude that drama may only be significant by chance because we ran multiple t-tests. We can say that other variables, including the adventure, horror and foreign genres are significant predictors of revenue.
 
 ```{r, echo=FALSE}
 vcov_model_2 <- vcovHC(model_2, type='const')
@@ -595,7 +593,7 @@ kable(
 )
 ```
 
-We considered evaluating the release months in the same way to make sure we're not proving a variable to be significant by chance. We'll multiply each p-value by 12 because there are 12 month variables in the model. Which leaves us with July and December as a significant variables, where June doesn't meet that level of significance and only July and Dcember are proving to be significant.
+We considered evaluating the release months in the same way to make sure we're not establishing a variable to be significant by chance. We'll multiply each p-value by 12 because there are 12 month variables in the model. This leaves us with July and December as significant variables, whereas June doesn't meet that level of significance and only July and December are indicating as significant.
 
 ```{r, echo=FALSE}
 vcov_model_3 <- vcovHC(model_3, type='const')
@@ -610,18 +608,16 @@ kable(
 ```
 
 
-Some additional variables that proved to be a good predictor of revenue are Director Score, Actor Score and Native English Film, Belongs to Collection as well as Runtime with a caveat that runtime is not practically significant with a very low coefficients which means that there will be insignificant increase to revenue with every additional minute of runtime. On the other hand we want to pay attention to variables that are statistically significant and have a high practical significance, such as belonging to a collection of movies, having a higher budget.
-
-Our suggested final model will be model 4 that will have practically and statistically significant variables.
+Some additional variables that proved to be a good predictor of revenue are Director Score, Actor Score and Native English Film, Belongs to Collection, as well as Runtime - with the caveat that runtime is not practically significant due to very low coefficients, and the increase in revenue for every additional minute of runtime is negligible. A stakeholder may instead wish to pay attention to variables that are statistically significant and have a high practical significance, such as Budget and Belongs to Collection. Based on these parameters, Our suggested final model would be model 4.
 
 ## Limitations
 ### Statistical limitations
 
-We will evaluate this model against 2 large model assumptions since we have a sample of well above 100. The first is IID and presence perfectly coliniear variables. 
+We will evaluate this model against 2 large model assumptions since we have a sample size well above 100. The first is IID and presence perfectly collinear variables. 
 
 1. In order to satisfy the large model assumption of IID, the samples used in our model must be Independent and Identically Distributed. It is difficult to guarantee that a sample is perfectly independent. Our data source originates from The Movie Database (TMDB), which is a community-built movie and TV database that includes international movies. It is one of the largest community-managed databases of movies, and provides a robust collection of movies from a range of countries. Out of this database, a sample of approximately 2000 randomly selected movies that were compiled for a Kaggle competition were used. Hence, here were no signs based on the method of data selection to suggest that the underlying distribution for samples was non-identical.
 
-Although multiple factors could cause the movies to be dependent on each other. For example movies that are produced as part of the sequel do dependent on the revenue and success of the previous releases. There could be multiple other scenarios that can influence other movies in the sample, and we're seeing some pattern in the Residuals vs. Fitted plot below which also may indicate error terms not to follow a constant variance, but given random sample that is drawn from a large database we will consider this to satisfy the IID assumption.
+That being said, there are multiple factors could cause movies' financial performance to not truly be independent. For example, movies that are produced as part of the sequel do depend on the revenue and success of previous releases. There may be multiple other scenarios that can influence other movies in the sample, and there is some pattern in the Residuals vs. Fitted plot below which also may indicate error terms that do not perfectly follow a constant variance, but given the aforementioned selection methods, we will consider this to reasonably satisfy the IID assumption.
 
 ```{r echo=FALSE, warning=FALSE}
 modf_2 <- fortify(model_4)
