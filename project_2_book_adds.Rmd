@@ -18,6 +18,8 @@ library(sandwich)
 library(stargazer)
 library(gridExtra)
 library(stringr)
+library(lmtest)
+library(knitr)
 ```
 
 ## Introduction
@@ -580,20 +582,31 @@ We found that quite a few variables in our consideration proved to be statistica
 
 In the second model when we include genre we have to interpret the statistical significance differently to avoid getting a significant genre by chance since we're evaluating a large number of genres. To make the significance stricter we will multiply the p-value for genre by 19, since we have 19 coefficients for genre. We conclude that drama may only be significant by chance because we ran multiple t-tests. And we can say that other variables, adventure, horror and foreign genres are significant predictors of revenue.
 
-```{r, include=FALSE}
-library(lmtest)
+```{r, echo=FALSE}
 vcov_model_2 <- vcovHC(model_2, type='const')
-coeftest(model_2, vcov=vcov_model_2)
+table <- coeftest(model_2, vcov=vcov_model_2)[,4] 
+
+
+kable(
+  table,
+  caption = 'Model 2 p-values', 
+  col.names = c("P-value"),
+  booktabs = TRUE, 
+)
 ```
 
 We considered evaluating the release months in the same way to make sure we're not proving a variable to be significant by chance. We'll multiply each p-value by 12 because there are 12 month variables in the model. Which leaves us with July and December as a significant variables, where June doesn't meet that level of significance and only July and Dcember are proving to be significant.
 
-```{r, include=FALSE}
-
-library(lmtest)
+```{r, echo=FALSE}
 vcov_model_3 <- vcovHC(model_3, type='const')
-coeftest(model_3, vcov=vcov_model_3)
+result_table_3 <- coeftest(model_3, vcov=vcov_model_3)[,4] 
 
+kable(
+  result_table_3,
+  caption = 'Model 3 p-values', 
+  col.names = c("P-value"),
+  booktabs = TRUE, 
+)
 ```
 
 
