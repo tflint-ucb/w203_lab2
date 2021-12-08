@@ -631,7 +631,7 @@ ggplot(modf_2, aes(x = .fitted, y = .resid)) + geom_point() + geom_smooth(
 ```
 
 
-2. The second model assumption is that there is no perfect collinearity between variables - this is suggested by the fact that none of the variables were dropped from the model when we were fitting the model. In the presence of multicollinearity, the `lm` function in R would drop a variable and not display the corresponding coefficient value or significance.
+2. The second model assumption is that there is no perfect collinearity between variables - this is suggested by the fact that none of the variables were dropped from the model when we were fitting the model. In the presence of multicollinearity, the `lm` function in R would drop a variable and not display the corresponding coefficient value or significance. This means that a unique Best Linear Predictor does exist, which satifies the assumption.
 
 Thus, we have met the 2 large model assumptions that are necessary to support our model, and this in turn suggests that our model is reasonable for use in drawing conclusions.
 
